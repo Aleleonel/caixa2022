@@ -217,11 +217,6 @@ class ListEstoque(QMainWindow):
         # self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
 
         self.cursor = conexao.banco.cursor()
-        # comando_sql = "SELECT a.codigo, a.descricao, b.preco, e.estoque, e.ultupdate FROM controle_clientes.produtos" \
-        #               " as a" \
-        #               " LEFT JOIN controle_clientes.precos as b on b.idprecos = a.codigo" \
-        #               " LEFT JOIN controle_clientes.estoque as e ON e.idproduto = a.codigo;"
-
         comando_sql = """
                       select                       
                         idproduto, 
@@ -712,11 +707,6 @@ class ListProdutos(QMainWindow):
     def loaddata(self):
 
         self.cursor = conexao.banco.cursor()
-        # comando_sql = "SELECT a.codigo, a.descricao, a.ncm, a.un, a.preco, e.estoque FROM " \
-        #               "controle_clientes.produtos " \
-        #               "as a LEFT JOIN controle_clientes.precos as b on b.idprecos = a.codigo LEFT JOIN " \
-        #               "controle_clientes.estoque as e ON e.idproduto = a.codigo; "
-
         comando_sql = """
                                 SELECT a.codigo, a.descricao, a.ncm, a.un, a.preco 
                                 FROM controle_clientes.produtos as a ;
@@ -1339,21 +1329,7 @@ class DataEntryForm(QWidget):
                 self.butonFecharCaixa.setEnabled(False)                 
                 
         except:
-            print("deu erro aqui")         
-
-                
-        # self.butonAbrirCaixa = QPushButton("Abrir Caixa", self)
-        # self.butonAbrirCaixa.setIcon(QIcon("Icones/dollars.png"))
-        # self.butonAbrirCaixa.setIconSize(QSize(40, 40))
-        # self.butonAbrirCaixa.setMinimumHeight(40)       
-        # self.layoutRight.addWidget(self.butonAbrirCaixa)
-
-        # self.butonFecharCaixa = QPushButton("Fechar Caixa", self)
-        # self.butonFecharCaixa.setIcon(QIcon("Icones/quit.png"))
-        # self.butonFecharCaixa.setIconSize(QSize(40, 40))
-        # self.butonFecharCaixa.setMinimumHeight(40) 
-        # self.butonFecharCaixa.setEnabled(False)       
-        # self.layoutRight.addWidget(self.butonFecharCaixa)
+            print("deu erro aqui") 
         
         self.lbl_titulo = QLabel("Caixa")
         self.lbl_titulo.setFont(QFont("Times", 42, QFont.Bold))
@@ -1377,6 +1353,7 @@ class DataEntryForm(QWidget):
         completer = QCompleter(self.model, self)
         self.lineEditCliente.setCompleter(completer)
         self.lineEditCliente.editingFinished.connect(self.addCliente)
+        
         self.layoutRight.addWidget(self.lineEditCliente)
 
         produtos = []
