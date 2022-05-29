@@ -1,5 +1,6 @@
 mysql-connector-python==8.0.23
 Pillow==8.1.2
+prettytable==3.3.0
 protobuf==3.15.6
 PyQt5==5.15.4
 PyQt5-Qt5==5.15.2
@@ -9,3 +10,6 @@ PyQtChart==5.15.4
 PyQtChart-Qt5==5.15.2
 reportlab==3.5.65
 six==1.15.0
+wcwidth==0.2.5
+
+
