@@ -1,5 +1,16 @@
-# PDV-Crontrole
+# PROJECT NAME : PDV-Crontrol
  / * Um sistemas de venda com cadastro de clientes, produtos e controle de estoque * /
+
+ # HOW TO RUN THIS PROJECT
+
+ - ESTE PROJETO RODA EM VERSÕES 
+     - Python Ver 3.X 
+     - PyQt5  Ver 5.15.4
+     - mysql  Ver 8.0.29
+     - mysql-connector-python Ver 8.0.23
+ 
+ - INSTALE AS DEPENDENCIAS DE FORMA GLOBAL EM SUA MAQUINA
+ - USUÁRIO adm senha 1
 
 # issues
 

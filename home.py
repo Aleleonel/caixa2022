@@ -1,21 +1,19 @@
-from unicodedata import decimal
-
-from PyQt5 import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtPrintSupport import *
-from PyQt5.QtWidgets import QMessageBox
-
-from datetime import date, datetime, time
+import csv
 # import time, datetime, date
 import os
 import sys
-import csv
+from datetime import date, datetime, time
+from unicodedata import decimal
 
 import mysql.connector
 from mysql.connector import OperationalError
-from prettytable import PrettyTable, PLAIN_COLUMNS
+from prettytable import PLAIN_COLUMNS, PrettyTable
+from PyQt5 import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtPrintSupport import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QMessageBox
 from reportlab.pdfgen import canvas
 
 import conexao
@@ -1923,6 +1921,7 @@ class EfetivaPedidoCaixa(QDialog):
         return self.nr_caixa
 
 import csv
+
 
 class Imprimir(QWidget):
     def __init__(self, n_caixa):
