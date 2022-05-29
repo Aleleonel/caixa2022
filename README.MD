@@ -10,6 +10,7 @@
      - mysql-connector-python Ver 8.0.23
  
  - INSTALE AS DEPENDENCIAS DE FORMA GLOBAL EM SUA MAQUINA
+ - IMPORTE O BANCO DE DADOS
  - USUÁRIO adm senha 1
 
 # issues
