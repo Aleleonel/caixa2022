@@ -15,6 +15,16 @@
  - IMPORTE O BANCO DE DADOS
  - USUÁRIO adm senha 1
 
+# como fazer
+
+    echo "# caixa" >> README.md
+    git init
+    git add README.md
+    git commit -m "first commit"
+    git branch -M main
+    git remote add origin git@github.com:Aleleonel/caixa.git
+    git push -u origin main
+
 # issues
 
  - QUANDO ESCOLHEMOS A IMPRIMIR O CUPOM O PROGRAMA FECHA PARA ABRIR A CADA DE IMPRESSÃO E DEPOIS QUE IMPRIMIMOS EME ABRE NOVAMENTE. DESABILITEI A IMPRESSÃO, TEMPORARIAMENTE. POR ENQUANTO APENAS UM ARQUIVO EM FORMATO PDF É GERADO ATE EU PENSAR EM UMA SOLUÇÃO MELHOR QUE IMPRESSÃO EM A4, CERTAMENTE UMA IMPRESSÃO DE CUPOM SERÁ MELHOR.
