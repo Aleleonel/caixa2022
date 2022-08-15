@@ -2,6 +2,7 @@ import csv
 # import time, datetime, date
 import os
 import sys
+import time
 from datetime import date, datetime, time
 from unicodedata import decimal
 
@@ -15,6 +16,7 @@ from PyQt5.QtPrintSupport import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWidgets import QMessageBox
 from reportlab.pdfgen import canvas
+from tqdm import tqdm
 
 import conexao
 
@@ -59,8 +61,10 @@ class AboutDialog(QDialog):
 
         layout.addWidget(QLabel("Versão:V1.0"))
         layout.addWidget(QLabel("Nome: Alexandre Leonel de Oliveira"))
-        layout.addWidget(QLabel("Nascido em: São Paulo em 26 de Junho de 1974"))
-        layout.addWidget(QLabel("Profissão: Bacharel em Sistemas de Informação"))
+        layout.addWidget(
+            QLabel("Nascido em: São Paulo em 26 de Junho de 1974"))
+        layout.addWidget(
+            QLabel("Profissão: Bacharel em Sistemas de Informação"))
         layout.addWidget(QLabel("Copyright Bi-Black-info 2021"))
 
         layout.addWidget(self.buttonBox)
@@ -171,12 +175,14 @@ class CadastroEstoque(QDialog):
             conexao.banco.commit()
             self.cursor.close()
 
-            QMessageBox.information(QMessageBox(), 'Cadastro', 'Dados inseridos com sucesso!')
+            QMessageBox.information(
+                QMessageBox(), 'Cadastro', 'Dados inseridos com sucesso!')
             self.close()
 
         except Exception:
 
-            QMessageBox.warning(QMessageBox(), 'aleleonel@gmail.com', 'A inserção falhou!')
+            QMessageBox.warning(
+                QMessageBox(), 'aleleonel@gmail.com', 'A inserção falhou!')
 
 
 class ListEstoque(QMainWindow):
@@ -197,14 +203,18 @@ class ListEstoque(QMainWindow):
         self.tableWidget.setColumnCount(6)
         # define que o cabeçalho não seja alterado
         # self.tableWidget.horizontalHeader().setCascadingSectionResizes(False)
-        self.tableWidget.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(
+            0, QHeaderView.ResizeToContents)
         # self.tableWidget.horizontalHeader().setSortIndicatorShown(False)
         self.tableWidget.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.tableWidget.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.tableWidget.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(
+            2, QHeaderView.ResizeToContents)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(
+            3, QHeaderView.ResizeToContents)
         # Estica conforme o conteudo da célula
         # self.tableWidget.horizontalHeader().setStretchLastSection(True)
-        self.tableWidget.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(
+            4, QHeaderView.ResizeToContents)
 
         self.tableWidget.verticalHeader().setVisible(False)
         self.tableWidget.verticalHeader().setCascadingSectionResizes(False)
@@ -258,7 +268,8 @@ class ListEstoque(QMainWindow):
 
         for i in range(0, len(result)):
             for j in range(0, 5):
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(result[i][j])))
+                self.tableWidget.setItem(
+                    i, j, QTableWidgetItem(str(result[i][j])))
 
         toolbar = QToolBar()
         toolbar.setMovable(False)
@@ -268,17 +279,20 @@ class ListEstoque(QMainWindow):
         self.setStatusBar(statusbar)
 
         # botões do menu
-        btn_ac_adduser = QAction(QIcon("Icones/add.png"), "Cadastro Estoque", self)
+        btn_ac_adduser = QAction(
+            QIcon("Icones/add.png"), "Cadastro Estoque", self)
         btn_ac_adduser.triggered.connect(self.cadEstoque)
         btn_ac_adduser.setStatusTip("Clientes")
         toolbar.addAction(btn_ac_adduser)
 
-        btn_ac_refresch = QAction(QIcon("Icones/atualizar.png"), "Atualizar dados do Estoque", self)
+        btn_ac_refresch = QAction(
+            QIcon("Icones/atualizar.png"), "Atualizar dados do Estoque", self)
         btn_ac_refresch.triggered.connect(self.loaddata)
         btn_ac_refresch.setStatusTip("Atualizar")
         toolbar.addAction(btn_ac_refresch)
 
-        btn_ac_search = QAction(QIcon("Icones/pesquisa.png"), "Pesquisar Produtos em Estoque", self)
+        btn_ac_search = QAction(
+            QIcon("Icones/pesquisa.png"), "Pesquisar Produtos em Estoque", self)
         btn_ac_search.triggered.connect(self.search)
         btn_ac_search.setStatusTip("Pesquisar")
         toolbar.addAction(btn_ac_search)
@@ -331,7 +345,8 @@ class ListEstoque(QMainWindow):
 
         for i in range(0, len(result)):
             for j in range(0, 5):
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(result[i][j])))
+                self.tableWidget.setItem(
+                    i, j, QTableWidgetItem(str(result[i][j])))
 
     def cadEstoque(self):
         dlg = CadastroEstoque()
@@ -370,7 +385,8 @@ class SearchEstoque(QDialog):
         self.searchinput = QLineEdit()
         self.onlyInt = QIntValidator()
         self.searchinput.setValidator(self.onlyInt)
-        self.searchinput.setPlaceholderText("Codigo do Produto - somente número")
+        self.searchinput.setPlaceholderText(
+            "Codigo do Produto - somente número")
         layout.addWidget(self.searchinput)
 
         layout.addWidget(self.QBtn)
@@ -382,13 +398,15 @@ class SearchEstoque(QDialog):
         searchroll = self.searchinput.text()
 
         try:
-            consulta_estoque = "SELECT * FROM controle_clientes.estoque WHERE idproduto=" + str(searchroll)
+            consulta_estoque = "SELECT * FROM controle_clientes.estoque WHERE idproduto=" + \
+                str(searchroll)
             self.cursor.execute(consulta_estoque)
             result_estoque = self.cursor.fetchall()
             for row in range(len(result_estoque)):
                 searchresult1 = "Codigo : " + str(result_estoque[0][0]) + '\n'
 
-            consulta_produto = "SELECT * FROM controle_clientes.produtos WHERE codigo=" + str(searchroll)
+            consulta_produto = "SELECT * FROM controle_clientes.produtos WHERE codigo=" + \
+                str(searchroll)
             self.cursor.execute(consulta_produto)
             result_produto = self.cursor.fetchall()
             for row in range(len(result_produto)):
@@ -396,10 +414,12 @@ class SearchEstoque(QDialog):
 
             mostra = searchresult1 + searchresult2
 
-            QMessageBox.information(QMessageBox(), 'Pesquisa realizada com sucesso!', mostra)
+            QMessageBox.information(
+                QMessageBox(), 'Pesquisa realizada com sucesso!', mostra)
 
         except Exception:
-            QMessageBox.warning(QMessageBox(), 'aleleonel@gmail.com', 'A pesquisa falhou!')
+            QMessageBox.warning(
+                QMessageBox(), 'aleleonel@gmail.com', 'A pesquisa falhou!')
 
 
 class CadastroClientes(QDialog):
@@ -486,13 +506,15 @@ class CadastroClientes(QDialog):
             conexao.banco.commit()
             self.cursor.close()
 
-            QMessageBox.information(QMessageBox(), 'Cadastro', 'Dados inseridos com sucesso!')
+            QMessageBox.information(
+                QMessageBox(), 'Cadastro', 'Dados inseridos com sucesso!')
 
             self.close()
 
         except Exception:
 
-            QMessageBox.warning(QMessageBox(), 'aleleonel@gmail.com', 'A inserção falhou!')
+            QMessageBox.warning(
+                QMessageBox(), 'aleleonel@gmail.com', 'A inserção falhou!')
 
 
 class DeleteClientes(QDialog):
@@ -521,7 +543,8 @@ class DeleteClientes(QDialog):
         self.deleteinput = QLineEdit()
         self.onlyInt = QIntValidator()
         self.deleteinput.setValidator(self.onlyInt)
-        self.deleteinput.setPlaceholderText("Codigo do cliente - somente número")
+        self.deleteinput.setPlaceholderText(
+            "Codigo do cliente - somente número")
         layout.addWidget(self.deleteinput)
 
         layout.addWidget(self.QBtn)
@@ -533,17 +556,20 @@ class DeleteClientes(QDialog):
 
         try:
             self.cursor = conexao.banco.cursor()
-            consulta_sql = "DELETE FROM clientes WHERE codigo = " + str(delroll)
+            consulta_sql = "DELETE FROM clientes WHERE codigo = " + \
+                str(delroll)
             self.cursor.execute(consulta_sql)
 
             conexao.banco.commit()
             self.cursor.close()
 
-            QMessageBox.information(QMessageBox(), 'Deleção realizada com sucesso!', 'DELETADO COM SUCESSO!')
+            QMessageBox.information(
+                QMessageBox(), 'Deleção realizada com sucesso!', 'DELETADO COM SUCESSO!')
             self.close()
 
         except Exception:
-            QMessageBox.warning(QMessageBox(), 'aleleonel@gmail.com', 'A Deleção falhou!')
+            QMessageBox.warning(
+                QMessageBox(), 'aleleonel@gmail.com', 'A Deleção falhou!')
 
 
 class CadastroProdutos(QDialog):
@@ -620,12 +646,14 @@ class CadastroProdutos(QDialog):
             conexao.banco.commit()
             self.cursor.close()
 
-            QMessageBox.information(QMessageBox(), 'Cadastro', 'Dados inseridos com sucesso!')
+            QMessageBox.information(
+                QMessageBox(), 'Cadastro', 'Dados inseridos com sucesso!')
             self.close()
 
         except Exception:
 
-            QMessageBox.warning(QMessageBox(), 'aleleonel@gmail.com', 'A inserção falhou!')
+            QMessageBox.warning(
+                QMessageBox(), 'aleleonel@gmail.com', 'A inserção falhou!')
 
 
 class ListProdutos(QMainWindow):
@@ -654,7 +682,8 @@ class ListProdutos(QMainWindow):
         self.tableWidget.verticalHeader().setVisible(False)
         self.tableWidget.verticalHeader().setCascadingSectionResizes(False)
         self.tableWidget.verticalHeader().setStretchLastSection(False)
-        self.tableWidget.setHorizontalHeaderLabels(("Codigo", "Descrição", "NCM", "UN", "Preço Venda",))
+        self.tableWidget.setHorizontalHeaderLabels(
+            ("Codigo", "Descrição", "NCM", "UN", "Preço Venda",))
 
         self.cursor = conexao.banco.cursor()
         comando_sql = """
@@ -670,7 +699,8 @@ class ListProdutos(QMainWindow):
 
         for i in range(0, len(result)):
             for j in range(0, 5):
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(result[i][j])))
+                self.tableWidget.setItem(
+                    i, j, QTableWidgetItem(str(result[i][j])))
 
         toolbar = QToolBar()
         toolbar.setMovable(False)
@@ -685,17 +715,20 @@ class ListProdutos(QMainWindow):
         btn_ac_adduser.setStatusTip("Add Produto")
         toolbar.addAction(btn_ac_adduser)
 
-        btn_ac_refresch = QAction(QIcon("Icones/atualizar.png"), "Atualizar dados do produto", self)
+        btn_ac_refresch = QAction(
+            QIcon("Icones/atualizar.png"), "Atualizar dados do produto", self)
         btn_ac_refresch.triggered.connect(self.loaddata)
         btn_ac_refresch.setStatusTip("Atualizar")
         toolbar.addAction(btn_ac_refresch)
 
-        btn_ac_delete = QAction(QIcon("Icones/deletar.png"), "Deletar o Produto", self)
+        btn_ac_delete = QAction(
+            QIcon("Icones/deletar.png"), "Deletar o Produto", self)
         btn_ac_delete.triggered.connect(self.delete)
         btn_ac_delete.setStatusTip("Deletar ")
         toolbar.addAction(btn_ac_delete)
 
-        btn_ac_search = QAction(QIcon("Icones/pesquisa.png"), "Pesquisar dados por produto", self)
+        btn_ac_search = QAction(
+            QIcon("Icones/pesquisa.png"), "Pesquisar dados por produto", self)
         btn_ac_search.triggered.connect(self.search)
         btn_ac_search.setStatusTip("Pesquisar")
         toolbar.addAction(btn_ac_search)
@@ -717,7 +750,8 @@ class ListProdutos(QMainWindow):
 
         for i in range(0, len(result)):
             for j in range(0, 5):
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(result[i][j])))
+                self.tableWidget.setItem(
+                    i, j, QTableWidgetItem(str(result[i][j])))
 
     def cadProdutos(self):
         dlg = CadastroProdutos()
@@ -761,7 +795,8 @@ class SearchProdutos(QDialog):
         self.searchinput = QLineEdit()
         self.onlyInt = QIntValidator()
         self.searchinput.setValidator(self.onlyInt)
-        self.searchinput.setPlaceholderText("Codigo do Produto - somente número")
+        self.searchinput.setPlaceholderText(
+            "Codigo do Produto - somente número")
         layout.addWidget(self.searchinput)
 
         layout.addWidget(self.QBtn)
@@ -773,7 +808,8 @@ class SearchProdutos(QDialog):
         searchroll = self.searchinput.text()
 
         try:
-            consulta_sql = "SELECT * FROM produtos WHERE codigo = " + str(searchroll)
+            consulta_sql = "SELECT * FROM produtos WHERE codigo = " + \
+                str(searchroll)
             self.cursor.execute(consulta_sql)
             result = self.cursor.fetchall()
 
@@ -784,10 +820,12 @@ class SearchProdutos(QDialog):
                                + '\n' + "UN : " + str(result[0][3]) \
                                + '\n' + "Preço : " + str(result[0][4])
 
-            QMessageBox.information(QMessageBox(), 'Pesquisa realizada com sucesso!', searchresult)
+            QMessageBox.information(
+                QMessageBox(), 'Pesquisa realizada com sucesso!', searchresult)
 
         except Exception:
-            QMessageBox.warning(QMessageBox(), 'aleleonel@gmail.com', 'A pesquisa falhou!')
+            QMessageBox.warning(
+                QMessageBox(), 'aleleonel@gmail.com', 'A pesquisa falhou!')
 
 
 class DeleteProduto(QDialog):
@@ -816,7 +854,8 @@ class DeleteProduto(QDialog):
         self.deleteinput = QLineEdit()
         self.onlyInt = QIntValidator()
         self.deleteinput.setValidator(self.onlyInt)
-        self.deleteinput.setPlaceholderText("Codigo do produto - somente número")
+        self.deleteinput.setPlaceholderText(
+            "Codigo do produto - somente número")
         layout.addWidget(self.deleteinput)
 
         layout.addWidget(self.QBtn)
@@ -828,17 +867,20 @@ class DeleteProduto(QDialog):
 
         try:
             self.cursor = conexao.banco.cursor()
-            consulta_sql = "DELETE FROM produtos WHERE codigo = " + str(delroll)
+            consulta_sql = "DELETE FROM produtos WHERE codigo = " + \
+                str(delroll)
             self.cursor.execute(consulta_sql)
 
             conexao.banco.commit()
             self.cursor.close()
 
-            QMessageBox.information(QMessageBox(), 'Deleção realizada com sucesso!', 'PRODUTO DELETADO COM SUCESSO!')
+            QMessageBox.information(
+                QMessageBox(), 'Deleção realizada com sucesso!', 'PRODUTO DELETADO COM SUCESSO!')
             self.close()
 
         except Exception:
-            QMessageBox.warning(QMessageBox(), 'aleleonel@gmail.com', 'A Deleção falhou!')
+            QMessageBox.warning(
+                QMessageBox(), 'aleleonel@gmail.com', 'A Deleção falhou!')
 
 
 class ListClientes(QMainWindow):
@@ -869,7 +911,8 @@ class ListClientes(QMainWindow):
         self.tableWidget.verticalHeader().setVisible(False)
         self.tableWidget.verticalHeader().setCascadingSectionResizes(False)
         self.tableWidget.verticalHeader().setStretchLastSection(False)
-        self.tableWidget.setHorizontalHeaderLabels(("Codigo", "Tipo", "Nome", "CPF", "RG", "Tel", "Endereco",))
+        self.tableWidget.setHorizontalHeaderLabels(
+            ("Codigo", "Tipo", "Nome", "CPF", "RG", "Tel", "Endereco",))
 
         self.cursor = conexao.banco.cursor()
         comando_sql = "SELECT * FROM clientes"
@@ -881,7 +924,8 @@ class ListClientes(QMainWindow):
 
         for i in range(0, len(result)):
             for j in range(0, 7):
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(result[i][j])))
+                self.tableWidget.setItem(
+                    i, j, QTableWidgetItem(str(result[i][j])))
 
         toolbar = QToolBar()
         toolbar.setMovable(False)
@@ -891,22 +935,26 @@ class ListClientes(QMainWindow):
         self.setStatusBar(statusbar)
 
         # botões do menu
-        btn_ac_adduser = QAction(QIcon("Icones/add.png"), "Cadastro de Cliente", self)
+        btn_ac_adduser = QAction(
+            QIcon("Icones/add.png"), "Cadastro de Cliente", self)
         btn_ac_adduser.triggered.connect(self.cadClientes)
         btn_ac_adduser.setStatusTip("Clientes")
         toolbar.addAction(btn_ac_adduser)
 
-        btn_ac_refresch = QAction(QIcon("Icones/atualizar.png"), "Atualizar dados do Cliente", self)
+        btn_ac_refresch = QAction(
+            QIcon("Icones/atualizar.png"), "Atualizar dados do Cliente", self)
         btn_ac_refresch.triggered.connect(self.loaddata)
         btn_ac_refresch.setStatusTip("Atualizar")
         toolbar.addAction(btn_ac_refresch)
 
-        btn_ac_search = QAction(QIcon("Icones/pesquisa.png"), "Pesquisar dados por Cliente", self)
+        btn_ac_search = QAction(
+            QIcon("Icones/pesquisa.png"), "Pesquisar dados por Cliente", self)
         btn_ac_search.triggered.connect(self.search)
         btn_ac_search.setStatusTip("Pesquisar")
         toolbar.addAction(btn_ac_search)
 
-        btn_ac_delete = QAction(QIcon("Icones/deletar.png"), "Deletar o Cliente", self)
+        btn_ac_delete = QAction(
+            QIcon("Icones/deletar.png"), "Deletar o Cliente", self)
         btn_ac_delete.triggered.connect(self.delete)
         btn_ac_delete.setStatusTip("Deletar ")
         toolbar.addAction(btn_ac_delete)
@@ -930,7 +978,8 @@ class ListClientes(QMainWindow):
 
         for i in range(0, len(result)):
             for j in range(0, 7):
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(result[i][j])))
+                self.tableWidget.setItem(
+                    i, j, QTableWidgetItem(str(result[i][j])))
 
     def cadClientes(self):
         dlg = CadastroClientes()
@@ -974,7 +1023,8 @@ class SearchClientes(QDialog):
         self.searchinput = QLineEdit()
         self.onlyInt = QIntValidator()
         self.searchinput.setValidator(self.onlyInt)
-        self.searchinput.setPlaceholderText("Codigo do cliente - somente número")
+        self.searchinput.setPlaceholderText(
+            "Codigo do cliente - somente número")
         layout.addWidget(self.searchinput)
 
         layout.addWidget(self.QBtn)
@@ -986,7 +1036,8 @@ class SearchClientes(QDialog):
         searchroll = self.searchinput.text()
 
         try:
-            consulta_sql = "SELECT * FROM clientes WHERE codigo = " + str(searchroll)
+            consulta_sql = "SELECT * FROM clientes WHERE codigo = " + \
+                str(searchroll)
             self.cursor.execute(consulta_sql)
             result = self.cursor.fetchall()
 
@@ -999,10 +1050,12 @@ class SearchClientes(QDialog):
                                + '\n' + "Tel : " + str(result[0][5]) \
                                + '\n' + "Ender. : " + str(result[0][6])
 
-            QMessageBox.information(QMessageBox(), 'Pesquisa realizada com sucesso!', searchresult)
+            QMessageBox.information(
+                QMessageBox(), 'Pesquisa realizada com sucesso!', searchresult)
 
         except Exception:
-            QMessageBox.warning(QMessageBox(), 'aleleonel@gmail.com', 'A pesquisa falhou!')
+            QMessageBox.warning(
+                QMessageBox(), 'aleleonel@gmail.com', 'A pesquisa falhou!')
 
 
 class DeleteCliente(QDialog):
@@ -1031,7 +1084,8 @@ class DeleteCliente(QDialog):
         self.deleteinput = QLineEdit()
         self.onlyInt = QIntValidator()
         self.deleteinput.setValidator(self.onlyInt)
-        self.deleteinput.setPlaceholderText("Codigo do cliente - somente número")
+        self.deleteinput.setPlaceholderText(
+            "Codigo do cliente - somente número")
         layout.addWidget(self.deleteinput)
 
         layout.addWidget(self.QBtn)
@@ -1043,17 +1097,20 @@ class DeleteCliente(QDialog):
 
         try:
             self.cursor = conexao.banco.cursor()
-            consulta_sql = "DELETE FROM clientes WHERE codigo = " + str(delroll)
+            consulta_sql = "DELETE FROM clientes WHERE codigo = " + \
+                str(delroll)
             self.cursor.execute(consulta_sql)
 
             conexao.banco.commit()
             self.cursor.close()
 
-            QMessageBox.information(QMessageBox(), 'Deleção realizada com sucesso!', 'DELETADO COM SUCESSO!')
+            QMessageBox.information(
+                QMessageBox(), 'Deleção realizada com sucesso!', 'DELETADO COM SUCESSO!')
             self.close()
 
         except Exception:
-            QMessageBox.warning(QMessageBox(), 'aleleonel@gmail.com', 'A Deleção falhou!')
+            QMessageBox.warning(
+                QMessageBox(), 'aleleonel@gmail.com', 'A Deleção falhou!')
 
 
 class AberturaCaixa(QDialog):
@@ -1067,7 +1124,7 @@ class AberturaCaixa(QDialog):
         self.d = QDate.currentDate()
         self.dataAtual = self.d.toString(Qt.ISODate)
         self.dataAtual = str(self.dataAtual)
-    
+
         layout = QVBoxLayout()
 
         self.setWindowTitle("Abertura do Caixa :")
@@ -1078,7 +1135,6 @@ class AberturaCaixa(QDialog):
         self.lbl_titulo.setFont(QFont("Times", 42, QFont.Bold))
         self.lbl_titulo.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.lbl_titulo)
-       
 
         self.dataabertura = QLineEdit()
         self.dataabertura.setPlaceholderText(self.dataAtual)
@@ -1094,23 +1150,23 @@ class AberturaCaixa(QDialog):
         self.buttonAdd = QPushButton("Add.", self)
         self.buttonAdd.setIcon(QIcon("Icones/add.png"))
         self.buttonAdd.setIconSize(QSize(40, 40))
-        self.buttonAdd.setMinimumHeight(40) 
-        self.buttonAdd.setEnabled(False) 
-        self.buttonAdd.clicked.connect(self.livrocaixa)             
+        self.buttonAdd.setMinimumHeight(40)
+        self.buttonAdd.setEnabled(False)
+        self.buttonAdd.clicked.connect(self.livrocaixa)
         layout.addWidget(self.buttonAdd)
         self.setLayout(layout)
-        
+
         self.caixainicio.textChanged[str].connect(self.check_disable)
-    
+
     def check_disable(self):
         """Habilita o botão adicionar valor livro caixa apenas se tiver valor no text"""
         if self.caixainicio.text():
-            self.buttonAdd.setEnabled(True)           
-            
+            self.buttonAdd.setEnabled(True)
+
         else:
-            self.buttonAdd.setEnabled(False)          
-    
-    def livrocaixa(self):        
+            self.buttonAdd.setEnabled(False)
+
+    def livrocaixa(self):
 
         self.d = QDate.currentDate()
         self.dataAtual = self.d.toString(Qt.ISODate)
@@ -1120,18 +1176,18 @@ class AberturaCaixa(QDialog):
         self.valorfechamento = 0
         self.total = 0
 
-
         self.valorcaixainiado += float(self.caixainicio.text())
         self.total += (self.valorcaixainiado + self.valorfechamento)
-        
+
         self.cursor = conexao.banco.cursor()
         comando_sql = "INSERT INTO livro (dataAtual, valor, valorfechamento,total, status) VALUES (%s, %s, %s, %s,%s)"
         dados = self.dataAtual, self.valorcaixainiado, self.valorfechamento, self.total, self.status
         self.cursor.execute(comando_sql, dados)
         conexao.banco.commit()
-        # self.close()       
+        # self.close()
 
         self.hide()
+
 
 class FechamentoCaixa(QDialog):
     """
@@ -1144,7 +1200,7 @@ class FechamentoCaixa(QDialog):
         self.d = QDate.currentDate()
         self.dataAtual = self.d.toString(Qt.ISODate)
         self.dataAtual = str(self.dataAtual)
-    
+
         layout = QVBoxLayout()
 
         self.setWindowTitle("Fechamento do Caixa :")
@@ -1155,7 +1211,6 @@ class FechamentoCaixa(QDialog):
         self.lbl_titulo.setFont(QFont("Times", 42, QFont.Bold))
         self.lbl_titulo.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.lbl_titulo)
-       
 
         self.datafechamento = QLineEdit()
         self.datafechamento.setPlaceholderText(self.dataAtual)
@@ -1171,23 +1226,22 @@ class FechamentoCaixa(QDialog):
         self.buttonAdd = QPushButton("Add.", self)
         self.buttonAdd.setIcon(QIcon("Icones/add.png"))
         self.buttonAdd.setIconSize(QSize(40, 40))
-        self.buttonAdd.setMinimumHeight(40) 
-        self.buttonAdd.setEnabled(False) 
-        self.buttonAdd.clicked.connect(self.livrocaixa)             
+        self.buttonAdd.setMinimumHeight(40)
+        self.buttonAdd.setEnabled(False)
+        self.buttonAdd.clicked.connect(self.livrocaixa)
         layout.addWidget(self.buttonAdd)
         self.setLayout(layout)
-        
+
         self.caixafechamento.textChanged[str].connect(self.check_disable)
-    
+
     def check_disable(self):
         """Habilita o botão adicionar valor livro caixa apenas se tiver valor no text"""
         if self.caixafechamento.text():
-            self.buttonAdd.setEnabled(True)           
-            
+            self.buttonAdd.setEnabled(True)
+
         else:
             self.buttonAdd.setEnabled(False)
 
-    
     def livrocaixa(self):
 
         try:
@@ -1197,7 +1251,8 @@ class FechamentoCaixa(QDialog):
             self.cursor.execute(consulta_sql)
             self.status_final = self.cursor.fetchall()
 
-            self.status_finalizado = [resultado for resultado in self.status_final]
+            self.status_finalizado = [
+                resultado for resultado in self.status_final]
             print("Mostra a ultima linha do status", self.status_finalizado)
         except:
             print("erro ao conectar")
@@ -1206,8 +1261,9 @@ class FechamentoCaixa(QDialog):
         self.dataAtual = self.d.toString(Qt.ISODate)
         self.dataAtual = str(self.dataAtual)
         self.status = 'F'
-        self.valorcaixainiado = 0 # precisa pegar da tabela, esse valor ja exite na tabela
-        self.valorfechamento = 0 # esse valor será inserido no momento do fechamento (digitado)
+        self.valorcaixainiado = 0  # precisa pegar da tabela, esse valor ja exite na tabela
+        # esse valor será inserido no momento do fechamento (digitado)
+        self.valorfechamento = 0
         self.total = 0
 
         self.valorfechamento += float(self.caixafechamento.text())
@@ -1219,20 +1275,22 @@ class FechamentoCaixa(QDialog):
         self.result = self.cursor.fetchall()
 
         self.fecha_indice = [resultado for resultado in self.result]
-        
-                
+
         for indice in range(len(self.fecha_indice)):
-            print('Mostar Result Fechamento_Caixa 0: ', self.fecha_indice[indice][0])
+            print('Mostar Result Fechamento_Caixa 0: ',
+                  self.fecha_indice[indice][0])
             # print('Mostar Result Fechamento_Caixa 1: ', self.fecha_indice[indice][1])
-            print('Mostar Result Fechamento_Caixa 2: ', self.fecha_indice[indice][2]) # valor da abertura indice[2]
+            print('Mostar Result Fechamento_Caixa 2: ',
+                  self.fecha_indice[indice][2])  # valor da abertura indice[2]
             # print('Mostar Result Fechamento_Caixa 3: ', self.fecha_indice[indice][3])
             # print('Mostar Result Fechamento_Caixa 4: ', self.fecha_indice[indice][4])
             print('********************************************')
 
-            self.valorcaixainiado = self.fecha_indice[indice][2] # precisa pegar da tabela, esse valor ja exite na tabela
+            # precisa pegar da tabela, esse valor ja exite na tabela
+            self.valorcaixainiado = self.fecha_indice[indice][2]
 
-        self.total += (self.valorcaixainiado + self.valorfechamento) - self.valorcaixainiado 
-
+        self.total += (self.valorcaixainiado +
+                       self.valorfechamento) - self.valorcaixainiado
 
         # inserir a somatória valor de entrada e valor do fechamento
         self.cursor = conexao.banco.cursor()
@@ -1240,10 +1298,10 @@ class FechamentoCaixa(QDialog):
         dados = self.dataAtual, self.valorcaixainiado, self.valorfechamento, self.total, self.status
         self.cursor.execute(comando_sql, dados)
         conexao.banco.commit()
-        # self.close()       
+        # self.close()
 
         self.hide()
-        
+
 
 class DataEntryForm(QWidget):
     def __init__(self):
@@ -1282,13 +1340,18 @@ class DataEntryForm(QWidget):
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         #                                       0         1          2        3            4
-        self.table.setHorizontalHeaderLabels(('Cod.', 'Descrição', 'Qtd', 'Preço Un.', 'Sub Total'))
+        self.table.setHorizontalHeaderLabels(
+            ('Cod.', 'Descrição', 'Qtd', 'Preço Un.', 'Sub Total'))
         # self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(
+            0, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(
+            2, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(
+            3, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(
+            4, QHeaderView.ResizeToContents)
 
         self.layoutRight = QVBoxLayout()
 
@@ -1297,14 +1360,14 @@ class DataEntryForm(QWidget):
         self.butonAbrirCaixa = QPushButton("Abrir Caixa", self)
         self.butonAbrirCaixa.setIcon(QIcon("Icones/dollars.png"))
         self.butonAbrirCaixa.setIconSize(QSize(40, 40))
-        self.butonAbrirCaixa.setMinimumHeight(40)       
+        self.butonAbrirCaixa.setMinimumHeight(40)
         self.layoutRight.addWidget(self.butonAbrirCaixa)
 
         self.butonFecharCaixa = QPushButton("Fechar Caixa", self)
         self.butonFecharCaixa.setIcon(QIcon("Icones/quit.png"))
         self.butonFecharCaixa.setIconSize(QSize(40, 40))
-        self.butonFecharCaixa.setMinimumHeight(40) 
-        # self.butonFecharCaixa.setEnabled(False)       
+        self.butonFecharCaixa.setMinimumHeight(40)
+        # self.butonFecharCaixa.setEnabled(False)
         self.layoutRight.addWidget(self.butonFecharCaixa)
 
         try:
@@ -1314,21 +1377,23 @@ class DataEntryForm(QWidget):
             self.cursor.execute(consulta_sql)
             self.status_final = self.cursor.fetchall()
 
-            self.status_finalizado = [resultado for resultado in self.status_final]
+            self.status_finalizado = [
+                resultado for resultado in self.status_final]
             for indice_final in range(len(self.status_finalizado)):
 
-                print("Mostra a ultima linha do status", self.status_finalizado[indice_final][0])
+                print("Mostra a ultima linha do status",
+                      self.status_finalizado[indice_final][0])
             aberto = self.status_finalizado[indice_final][0]
             if aberto == "I":
                 self.butonAbrirCaixa.setEnabled(False)
-                self.butonFecharCaixa.setEnabled(True)               
+                self.butonFecharCaixa.setEnabled(True)
             else:
-                self.butonAbrirCaixa.setEnabled(True) 
-                self.butonFecharCaixa.setEnabled(False)                 
-                
+                self.butonAbrirCaixa.setEnabled(True)
+                self.butonFecharCaixa.setEnabled(False)
+
         except:
-            print("deu erro aqui") 
-        
+            print("deu erro aqui")
+
         self.lbl_titulo = QLabel("Caixa")
         self.lbl_titulo.setFont(QFont("Times", 42, QFont.Bold))
         self.lbl_titulo.setAlignment(Qt.AlignCenter)
@@ -1351,7 +1416,7 @@ class DataEntryForm(QWidget):
         completer = QCompleter(self.model, self)
         self.lineEditCliente.setCompleter(completer)
         self.lineEditCliente.editingFinished.connect(self.addCliente)
-        
+
         self.layoutRight.addWidget(self.lineEditCliente)
 
         produtos = []
@@ -1412,11 +1477,11 @@ class DataEntryForm(QWidget):
         self.buttongerar.setIconSize(QSize(40, 40))
         self.buttongerar.setMinimumHeight(40)
         self.buttongerar.setEnabled(False)
-        
+
         self.layoutRight.addWidget(self.buttonAdd)
         self.layoutRight.addWidget(self.buttongerar)
         self.layoutRight.addWidget(self.buttonClear)
-        self.layoutRight.addWidget(self.buttonClearOne)        
+        self.layoutRight.addWidget(self.buttonClearOne)
 
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.table, 0)
@@ -1429,16 +1494,16 @@ class DataEntryForm(QWidget):
         self.buttongerar.clicked.connect(self.gerar)
         self.buttonAdd.clicked.connect(self.add_entry)
         self.butonAbrirCaixa.clicked.connect(self.abrircaixa)
-        self.butonFecharCaixa.clicked.connect(self.fecharcaixa)        
+        self.butonFecharCaixa.clicked.connect(self.fecharcaixa)
 
         self.lineEditDescription.textChanged[str].connect(self.check_disable)
         self.lineEditPrice.textChanged[str].connect(self.check_disable)
 
         self.fill_table()
-    
+
     def abrircaixa(self):
         # self.butonAbrirCaixa.setEnabled(False)
-        # self.butonFecharCaixa.setEnabled(True) 
+        # self.butonFecharCaixa.setEnabled(True)
         try:
             # varrer a tabela livro para pegar o valorcaixainiciado
             self.cursor = conexao.banco.cursor()
@@ -1446,27 +1511,29 @@ class DataEntryForm(QWidget):
             self.cursor.execute(consulta_sql)
             self.status_final = self.cursor.fetchall()
 
-            self.status_finalizado = [resultado for resultado in self.status_final]
+            self.status_finalizado = [
+                resultado for resultado in self.status_final]
             for indice_final in range(len(self.status_finalizado)):
 
-                print("Mostra a ultima linha do status", self.status_finalizado[indice_final][0])
+                print("Mostra a ultima linha do status",
+                      self.status_finalizado[indice_final][0])
             aberto = self.status_finalizado[indice_final][0]
             if aberto == "I":
                 self.butonAbrirCaixa.setEnabled(False)
-                self.butonFecharCaixa.setEnabled(True) 
-                QMessageBox.warning(QMessageBox(), 'Atenção!', 'Caixa já está Aberto!')
+                self.butonFecharCaixa.setEnabled(True)
+                QMessageBox.warning(QMessageBox(), 'Atenção!',
+                                    'Caixa já está Aberto!')
                 self.closeEvent()
             else:
-                self.butonAbrirCaixa.setEnabled(True)  
-                self.butonFecharCaixa.setEnabled(False)               
+                self.butonAbrirCaixa.setEnabled(True)
+                self.butonFecharCaixa.setEnabled(False)
                 dlg = AberturaCaixa()
                 dlg.exec()
-                # self.butonAbrirCaixa.setEnabled(False) 
-                self.butonFecharCaixa.setEnabled(False) 
+                # self.butonAbrirCaixa.setEnabled(False)
+                self.butonFecharCaixa.setEnabled(False)
         except:
-            print("deu erro aqui")   
-       
-    
+            print("deu erro aqui")
+
     def fecharcaixa(self, event):
 
         try:
@@ -1476,26 +1543,29 @@ class DataEntryForm(QWidget):
             self.cursor.execute(consulta_sql)
             self.status_final = self.cursor.fetchall()
 
-            self.status_finalizado = [resultado for resultado in self.status_final]
+            self.status_finalizado = [
+                resultado for resultado in self.status_final]
             for indice_final in range(len(self.status_finalizado)):
 
-                print("Mostra a ultima linha do status", self.status_finalizado[indice_final][0])
+                print("Mostra a ultima linha do status",
+                      self.status_finalizado[indice_final][0])
             aberto = self.status_finalizado[indice_final][0]
             if aberto == "F":
-                self.butonFecharCaixa.setEnabled(False) 
-                QMessageBox.warning(QMessageBox(), 'Atenção!', 'Caixa já Fechado!')
+                self.butonFecharCaixa.setEnabled(False)
+                QMessageBox.warning(
+                    QMessageBox(), 'Atenção!', 'Caixa já Fechado!')
                 self.butonAbrirCaixa.setEnabled(True)
-                self.closeEvent()                
+                self.closeEvent()
 
             else:
                 self.butonFecharCaixa.setEnabled(True)
-                self.butonAbrirCaixa.setEnabled(False) 
+                self.butonAbrirCaixa.setEnabled(False)
                 replay = QMessageBox.question(self, 'Window close', 'Deseja realmente Fechar o caixa?',
-                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                                              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
                 if replay == QMessageBox.Yes:
 
-                    dataAtual = QDate.currentDate()            
+                    dataAtual = QDate.currentDate()
                     self.soma_fechamento = 0
                     valor_do_dia = []
                     decimal_lista = []
@@ -1503,37 +1573,37 @@ class DataEntryForm(QWidget):
                     dlg = FechamentoCaixa()
                     dlg.exec()
                 else:
-                    pass     
+                    pass
 
         except:
             print("deu erro aqui")
-
 
         try:
             self.cursor = conexao.banco.cursor()
             __fechamento = "SELECT ultupdate, valor_total FROM pedidocaixa "
             self.cursor.execute(__fechamento)
             fechamento_diario = self.cursor.fetchall()
-           
+
             data_fechamento = [fecha for fecha in fechamento_diario]
-            for dtnumber in range(len(data_fechamento)):                
-                if dataAtual == data_fechamento[dtnumber][0]:                    
-                    print("Valor itens Melecas: ", data_fechamento[dtnumber][1])  
+            for dtnumber in range(len(data_fechamento)):
+                if dataAtual == data_fechamento[dtnumber][0]:
+                    print("Valor itens Melecas: ",
+                          data_fechamento[dtnumber][1])
 
                     valor_do_dia.append(data_fechamento[dtnumber][1])
                     self.soma_fechamento += data_fechamento[dtnumber][1]
-            
-            print("Data atual: ", data_fechamento[dtnumber][0]) 
+
+            print("Data atual: ", data_fechamento[dtnumber][0])
             print("Valor total: ", self.soma_fechamento)
-            
-                                    
+
             y = 0
             pdf = canvas.Canvas("fechamento_caixa.pdf")
             pdf.setFont("Times-Bold", 18)
             pdf.drawString(90, 800, "RELATÓRIO DE FECHAMENTO DO CAIXA:")
             pdf.setFont("Times-Bold", 12)
 
-            pdf.drawString(10, 700 - y, str('20/03/2022'))  # DATA DO FECHAMENTO
+            # DATA DO FECHAMENTO
+            pdf.drawString(10, 700 - y, str('20/03/2022'))
             pdf.drawString(90, 700 - y, str('500'))  # VALOR DA ABERTURA
 
             pdf.drawString(10, 750, "Data")
@@ -1542,17 +1612,16 @@ class DataEntryForm(QWidget):
             pdf.drawString(290, 750, "Total Recebido.")
             pdf.drawString(410, 750, "Total.")
             pdf.drawString(3, 750,
-                        "________________________________________________________________________________________")
+                           "________________________________________________________________________________________")
 
             total = 0
             subtotal = 0
             i = [i for i in valor_do_dia]
             cont = len(i)
             c = 0
-            while cont >0:                 
+            while cont > 0:
                 print("Valor por itens: ", i[c])
-               
-           
+
                 y += 50
                 # pdf.drawString(10, 750 - y, str('20/03/2022'))  # CODIGO PRODUTO
                 # pdf.drawString(90, 750 - y, str('500'))  # DESCRIÇAO PRODUTO
@@ -1565,17 +1634,17 @@ class DataEntryForm(QWidget):
                 cont -= 1
                 c += 1
 
-            
             pdf.drawString(290, 750 - y, str(self.soma_fechamento))  # TOTAL
-            pdf.drawString(410, 750 - y, str(self.soma_fechamento + 500))  # TOTAL
+            pdf.drawString(
+                410, 750 - y, str(self.soma_fechamento + 500))  # TOTAL
 
             pdf.save()
 
             # with open('recibo.csv', 'w') as f:
             #     csv_writer = csv.writer(f)
             #     rows = [i for i in valor_do_dia]
-            #     csv_writer.writerows(rows)                        
-            
+            #     csv_writer.writerows(rows)
+
         except Exception as e:
             print(e)
 
@@ -1651,10 +1720,12 @@ class DataEntryForm(QWidget):
             qtdItem = QTableWidgetItem(str(self.qtd))
             qtdItem.setTextAlignment(Qt.AlignRight | Qt.AlignCenter)
 
-            subItem = QTableWidgetItem('R${0:.2f} '.format(float(self.sub_ttotal)))
+            subItem = QTableWidgetItem(
+                'R${0:.2f} '.format(float(self.sub_ttotal)))
             subItem.setTextAlignment(Qt.AlignRight | Qt.AlignCenter)
 
-            priceItem = QTableWidgetItem('R${0:.2f} '.format(float(self.price)))
+            priceItem = QTableWidgetItem(
+                'R${0:.2f} '.format(float(self.price)))
             priceItem.setTextAlignment(Qt.AlignRight | Qt.AlignCenter)
 
             self.table.insertRow(self.items)
@@ -1734,7 +1805,8 @@ class DataEntryForm(QWidget):
                     col = self.table.columnCount()
                     resultado = 0
                     for x in range(0, col, 1):
-                        self.headertext = self.table.horizontalHeaderItem(x).text()
+                        self.headertext = self.table.horizontalHeaderItem(
+                            x).text()
                         if self.headertext == 'Sub Total':
                             cabCol = x
                             resultado = self.table.item(row, cabCol).text()
@@ -1769,7 +1841,8 @@ class DataEntryForm(QWidget):
     def codigoclientepedido(self):
         nome = self.lineEditCliente.text()
         self.cursor = conexao.banco.cursor()
-        comando_sql = "SELECT codigo FROM clientes WHERE nome ='{}' ".format(nome)
+        comando_sql = "SELECT codigo FROM clientes WHERE nome ='{}' ".format(
+            nome)
         self.cursor.execute(comando_sql)
         cod_cli = self.cursor.fetchall()
         codigo = cod_cli[0][0]
@@ -1827,28 +1900,29 @@ class EfetivaPedidoCaixa(QDialog):
         # self.lbl_total.setStyleSheet("border-radius: 25px;border: 1px solid black;")
         layout.addWidget(self.lbl_finaliza)
 
-        # Insere o ramo ou tipo /
-
         self.precoinput = QLineEdit()
         self.onlyFloat = QDoubleValidator()
         self.precoinput.setValidator(self.onlyFloat)
-        self.precoinput.setPlaceholderText("Digite o valor recebido aqui - 'R$ 0.00'")
+        self.precoinput.setPlaceholderText(
+            "Digite o valor recebido aqui - 'R$ 0,00'")
         self.precoinput.textChanged[str].connect(self.check_disable)
         layout.addWidget(self.precoinput)
 
         self.lbl_total = QLabel()
-        self.lbl_total.setText(str(totaliza))
+        self.lbl_total.setText(str(totaliza).replace('.', ','))
         self.lbl_total.setFont(QFont("Times", 42, QFont.Bold))
         self.lbl_total.setAlignment(Qt.AlignCenter)
-        self.lbl_total.setStyleSheet("border-radius: 25px;border: 1px solid black;")
+        self.lbl_total.setStyleSheet(
+            "border-radius: 25px;border: 1px solid black;")
         layout.addWidget(self.lbl_total)
 
         self.lbl_troco = QLabel()
         # self.lbl_troco.setText(str(totaliza))
-        self.lbl_troco.setText('R$ 0.00')
+        self.lbl_troco.setText('R$ 0,00')
         self.lbl_troco.setFont(QFont("Times", 42, QFont.Bold))
         self.lbl_troco.setAlignment(Qt.AlignCenter)
-        self.lbl_troco.setStyleSheet("border-radius: 25px;border: 1px solid black;")
+        self.lbl_troco.setStyleSheet(
+            "border-radius: 25px;border: 1px solid black;")
         layout.addWidget(self.lbl_troco)
 
         self.buttonreceber = QPushButton("Receber", self)
@@ -1873,13 +1947,15 @@ class EfetivaPedidoCaixa(QDialog):
         self.setLayout(layout)
         self.show()
 
-   
     def receber(self, totalizando):
 
-        recebido = float(self.precoinput.text())
-        self.lbl_total.setText((str('Total = R$ {0:.2f}'.format(totalizando))))
+        recebido = float(self.precoinput.text().replace(',', '.'))
+
+        self.lbl_total.setText(
+            (str('Total = R$ {0:.2f}'.format(totalizando).replace('.', ','))))
         troco = (recebido - totalizando)
-        self.lbl_troco.setText((str('Troco = R$ {0:.2f}'.format(troco))))
+        self.lbl_troco.setText(
+            (str('Troco = R$ {0:.2f}'.format(troco)).replace('.', ',')))
 
     def check_disable(self):
         if self.precoinput.text():
@@ -1909,38 +1985,20 @@ class EfetivaPedidoCaixa(QDialog):
                                            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if replay2 == QMessageBox.Yes:
                 self.hide()
-                dlg = Imprimir(self.nr_caixa)
-                dlg.exec()
+
+                # dlg = Imprimir(self.nr_caixa)
+                # dlg.exec()
+
+                self.printer()
+
             else:
                 self.hide()
                 dlg = telaprincipal()
                 dlg.exec()
-        else:
-            pass
 
         return self.nr_caixa
 
-import csv
-
-
-class Imprimir(QWidget):
-    def __init__(self, n_caixa):
-        super(Imprimir, self).__init__()
-        self.black = "#000000"
-        self.yellow = "#cfb119"
-        self.setStyleSheet(f"background-color: {self.black}; color: {self.yellow};")
-
-        self.nr_caixa = n_caixa
-
-
-        self.vbox = QVBoxLayout()
-        self.title = "Cadastro"
-        self.top = 100
-        self.left = 100
-        self.width = 640
-        self.height = 480
-        self.setWindowIcon(QIcon("Icones/impressora.png"))
-        self.setLayout(self.vbox)
+    def printer(self):
 
         self.cursor = conexao.banco.cursor()
         comando_sql = """
@@ -1976,11 +2034,16 @@ class Imprimir(QWidget):
         subtotal = 0
         for i in range(0, len(dados_lidos)):
             y += 50
-            pdf.drawString(10, 750 - y, str(dados_lidos[i][0]))  # CODIGO PRODUTO
-            pdf.drawString(50, 750 - y, str(dados_lidos[i][1]))  # DESCRIÇAO PRODUTO
-            pdf.drawString(260, 750 - y, str(dados_lidos[i][2]))  # QUANTIDADE VENDIDA
-            pdf.drawString(310, 750 - y, str(dados_lidos[i][3]))  # PREÇO UNITARIO
-            subtotal = (dados_lidos[i][3]) * dados_lidos[i][2]  # QTD x PREÇO UNITARIO
+            # CODIGO PRODUTO
+            pdf.drawString(10, 750 - y, str(dados_lidos[i][0]))
+            # DESCRIÇAO PRODUTO
+            pdf.drawString(50, 750 - y, str(dados_lidos[i][1]))
+            # QUANTIDADE VENDIDA
+            pdf.drawString(260, 750 - y, str(dados_lidos[i][2]))
+            # PREÇO UNITARIO
+            pdf.drawString(310, 750 - y, str(dados_lidos[i][3]))
+            subtotal = (dados_lidos[i][3]) * \
+                dados_lidos[i][2]  # QTD x PREÇO UNITARIO
             total += subtotal
             pdf.drawString(390, 750 - y, str(subtotal))  # SUB TOTAL
         pdf.drawString(470, 750 - y, str(total))  # TOTAL
@@ -1992,21 +2055,14 @@ class Imprimir(QWidget):
             rows = [i for i in dados_lidos]
             csv_writer.writerows(rows)
 
-
+        dlg = telaprincipal()
+        dlg.exec()
 
         self.InitWindow()
+        self.Barra()
 
     def InitWindow(self):
-        self.hbox = QHBoxLayout()
 
-        self.print_btn = QPushButton("IMPRIMIR", self)
-        self.print_btn.clicked.connect(self.print)
-
-        self.view_btn = QPushButton("VISUALIZAR", self)
-        self.view_btn.clicked.connect(self.view)
-
-        self.rw = PrettyTable()
-        self.rw.field_names = ["Cod.", "Descrição", "Quant.", "Preco unit.", "Subtotal\n"]
         try:
             with open("recibo.csv", "r") as msg:
                 self.lin = [x.strip().split(",") for x in msg]
@@ -2026,66 +2082,181 @@ class Imprimir(QWidget):
         except Exception as e:
             self.errors(e)
 
-        empresa = "MINA & MINEKO ART. FEMININS E TABACARIA"
-        endereco = "Rua Enestina Loschi n.76"
-        telefone = "(11) 97151-2237 / (11) 97561-8992)"
-        text = f'\n\nTOTAL: {total:>130} \n\nEmpresa: {empresa:^90} \nEndereço: {endereco:^90} \nTelefones: {telefone:^90}'
 
-        newGroup = QGroupBox("LISTA DE PRODUTOS")
-        newGroup.setStyleSheet(f"background-color: {self.black}; color: {self.yellow}")
+# class Imprimir(QWidget):
+#     ''' Imprime usando uma box com opções de impressora e visualizações'''
 
-        self.edt = QTextEdit(self)
-        self.edt.setAcceptRichText(True)
-        self.edt.setReadOnly(True)
-        self.edt.setText(f"{self.rw} \n{text}")
-        self.vbox.addWidget(self.edt)
+#     def __init__(self, n_caixa):
+#         super(Imprimir, self).__init__()
+#         self.black = "#000000"
+#         self.yellow = "#cfb119"
+#         self.setStyleSheet(
+#             f"background-color: {self.black}; color: {self.yellow};")
 
-        self.hbox.addWidget(self.print_btn)
-        # self.hbox.addWidget(self.view_btn)
-        self.vbox.addLayout(self.hbox)
+#         self.nr_caixa = n_caixa
 
-        self.setWindowTitle(self.title)
-        self.setGeometry(self.top, self.left, self.width, self.height)
-        self.show()
+#         self.vbox = QVBoxLayout()
+#         self.title = "Cadastro"
+#         self.top = 100
+#         self.left = 100
+#         self.width = 640
+#         self.height = 480
+#         self.setWindowIcon(QIcon("Icones/impressora.png"))
+#         self.setLayout(self.vbox)
 
-    def errors(self, e):
-        print(e)
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        err = f"{e} \n{exc_type} \n{fname} \n{exc_tb.tb_lineno} \n"
-        print(err)
+#         self.cursor = conexao.banco.cursor()
+#         comando_sql = """
+#                         select
+#                             p.codigo,
+#                             p.descricao,
+#                             e.quantidade,
+#                             p.preco,
+#                             e.valor_total
+#                         from
+#                             produtos p
+#                         inner join pedidocaixa e on p.codigo = e.cod_produto
+#                         AND nr_caixa = {0}""".format(str(self.nr_caixa))
 
-    def print(self):
-        prt = QPrinter(QPrinter.HighResolution)
-        dialog = QPrintDialog(prt)
+#         self.cursor.execute(comando_sql)
+#         dados_lidos = self.cursor.fetchall()
+#         y = 0
+#         pdf = canvas.Canvas("recibo.pdf")
+#         pdf.setFont("Times-Bold", 18)
+#         pdf.drawString(90, 800, "MINA & MINEKO ART. FAMELE:")
+#         pdf.setFont("Times-Bold", 12)
 
-        if dialog.exec_() == QPrintDialog.Accepted:
-            self.edt.print_(prt)
-            # self.hide()
-            telaprincipal()
-        # telaprincipal()
+#         pdf.drawString(10, 750, "ID")
+#         pdf.drawString(50, 750, "PRODUTO")
+#         pdf.drawString(260, 750, "QTD.")
+#         pdf.drawString(310, 750, "PREÇO UN.")
+#         pdf.drawString(390, 750, "SUB.TOTAL")
+#         pdf.drawString(470, 750, "TOTAL")
+#         pdf.drawString(3, 750,
+#                        "________________________________________________________________________________________")
 
-    def view(self):
-        pt = QPrinter(QPrinter.HighResolution)
-        prev = QPrintPreviewDialog(pt, self)
-        prev.paintRequested.connect(self.preview)
-        prev.exec_()
+#         total = 0
+#         subtotal = 0
+#         for i in range(0, len(dados_lidos)):
+#             y += 50
+#             # CODIGO PRODUTO
+#             pdf.drawString(10, 750 - y, str(dados_lidos[i][0]))
+#             # DESCRIÇAO PRODUTO
+#             pdf.drawString(50, 750 - y, str(dados_lidos[i][1]))
+#             # QUANTIDADE VENDIDA
+#             pdf.drawString(260, 750 - y, str(dados_lidos[i][2]))
+#             # PREÇO UNITARIO
+#             pdf.drawString(310, 750 - y, str(dados_lidos[i][3]))
+#             subtotal = (dados_lidos[i][3]) * \
+#                 dados_lidos[i][2]  # QTD x PREÇO UNITARIO
+#             total += subtotal
+#             pdf.drawString(390, 750 - y, str(subtotal))  # SUB TOTAL
+#         pdf.drawString(470, 750 - y, str(total))  # TOTAL
 
-    def preview(self, pt):
-        self.edt.print_(pt)
+#         pdf.save()
 
-    # testar a criação de um arquivo csv baseado na table
-    def export_to_csv(self, w):
-        try:
-            with open('recibo.csv', 'w', newline='') as file:
-                writer = csv.writer(file)
-                writer.writerow((w.table.horizontalHeaderItem(0).text(), w.table.horizontalHeaderItem(1).text()))
-                for rowNumber in range(w.table.rowCount()):
-                    writer.writerow([w.table.item(rowNumber, 0).text(), w.table.item(rowNumber, 1).text()])
-                print('CSV file exported.')
-            file.close()
-        except Exception as e:
-            print(e)
+#         with open('recibo.csv', 'w') as f:
+#             csv_writer = csv.writer(f)
+#             rows = [i for i in dados_lidos]
+#             csv_writer.writerows(rows)
+
+#         self.InitWindow()
+
+#     def InitWindow(self):
+#         '''Permie visualizar a impressão em tela, mas estva fechando a tela principal
+#         por isso eu desativei a chamada'''
+#         self.hbox = QHBoxLayout()
+
+#         self.print_btn = QPushButton("IMPRIMIR", self)
+#         self.print_btn.clicked.connect(self.print)
+
+#         self.view_btn = QPushButton("VISUALIZAR", self)
+#         self.view_btn.clicked.connect(self.view)
+
+#         self.rw = PrettyTable()
+#         self.rw.field_names = ["Cod.", "Descrição",
+#                                "Quant.", "Preco unit.", "Subtotal\n"]
+#         try:
+#             with open("recibo.csv", "r") as msg:
+#                 self.lin = [x.strip().split(",") for x in msg]
+
+#                 self.a = [self.lin[x] for x in range(len(self.lin))]
+
+#                 total = 0
+#                 for x in self.a:
+#                     self.rw.set_style(PLAIN_COLUMNS)
+#                     self.rw.add_row(x)
+
+#                 for sub in range(len(self.a)):
+#                     total += float(self.a[sub][4])
+
+#                 print(self.rw)
+#                 msg.close()
+#         except Exception as e:
+#             self.errors(e)
+
+#         empresa = "MINA & MINEKO ART. FEMININS E TABACARIA"
+#         endereco = "Rua Enestina Loschi n.76"
+#         telefone = "(11) 97151-2237 / (11) 97561-8992)"
+#         text = f'\n\nTOTAL: {total:>130} \n\nEmpresa: {empresa:^90} \nEndereço: {endereco:^90} \nTelefones: {telefone:^90}'
+
+#         newGroup = QGroupBox("LISTA DE PRODUTOS")
+#         newGroup.setStyleSheet(
+#             f"background-color: {self.black}; color: {self.yellow}")
+
+#         self.edt = QTextEdit(self)
+#         self.edt.setAcceptRichText(True)
+#         self.edt.setReadOnly(True)
+#         self.edt.setText(f"{self.rw} \n{text}")
+#         self.vbox.addWidget(self.edt)
+
+#         self.hbox.addWidget(self.print_btn)
+#         # self.hbox.addWidget(self.view_btn)
+#         self.vbox.addLayout(self.hbox)
+
+#         self.setWindowTitle(self.title)
+#         self.setGeometry(self.top, self.left, self.width, self.height)
+#         self.show()
+
+#     def errors(self, e):
+#         print(e)
+#         exc_type, exc_obj, exc_tb = sys.exc_info()
+#         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+#         err = f"{e} \n{exc_type} \n{fname} \n{exc_tb.tb_lineno} \n"
+#         print(err)
+
+#     def print(self):
+#         prt = QPrinter(QPrinter.HighResolution)
+#         dialog = QPrintDialog(prt)
+
+#         if dialog.exec_() == QPrintDialog.Accepted:
+#             self.edt.print_(prt)
+#             # self.hide()
+#             telaprincipal()
+#         # telaprincipal()
+
+#     def view(self):
+#         pt = QPrinter(QPrinter.HighResolution)
+#         prev = QPrintPreviewDialog(pt, self)
+#         prev.paintRequested.connect(self.preview)
+#         prev.exec_()
+
+#     def preview(self, pt):
+#         self.edt.print_(pt)
+
+#     # testar a criação de um arquivo csv baseado na table
+#     def export_to_csv(self, w):
+#         try:
+#             with open('recibo.csv', 'w', newline='') as file:
+#                 writer = csv.writer(file)
+#                 writer.writerow((w.table.horizontalHeaderItem(
+#                     0).text(), w.table.horizontalHeaderItem(1).text()))
+#                 for rowNumber in range(w.table.rowCount()):
+#                     writer.writerow(
+#                         [w.table.item(rowNumber, 0).text(), w.table.item(rowNumber, 1).text()])
+#                 print('CSV file exported.')
+#             file.close()
+#         except Exception as e:
+#             print(e)
 
 
 class ListPedidos(QMainWindow):
@@ -2154,7 +2325,8 @@ class ListPedidos(QMainWindow):
 
         for i in range(0, len(result)):
             for j in range(0, 6):
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(result[i][j])))
+                self.tableWidget.setItem(
+                    i, j, QTableWidgetItem(str(result[i][j])))
 
         toolbar = QToolBar()
         toolbar.setMovable(False)
@@ -2164,7 +2336,8 @@ class ListPedidos(QMainWindow):
         self.setStatusBar(statusbar)
         # botões do menu
 
-        btn_ac_refresch = QAction(QIcon("Icones/atualizar.png"), "Atualizar dados da Lista de Pedidos", self)
+        btn_ac_refresch = QAction(
+            QIcon("Icones/atualizar.png"), "Atualizar dados da Lista de Pedidos", self)
         btn_ac_refresch.triggered.connect(self.loaddatapedido)
         btn_ac_refresch.setStatusTip("Atualizar")
         toolbar.addAction(btn_ac_refresch)
@@ -2188,7 +2361,8 @@ class ListPedidos(QMainWindow):
         self.precoinput = QLineEdit()
         self.onlyFloat = QDoubleValidator()
         self.precoinput.setValidator(self.onlyFloat)
-        self.precoinput.setPlaceholderText("Digite o valor recebido aqui - 'R$ 0.00'")
+        self.precoinput.setPlaceholderText(
+            "Digite o valor recebido aqui - 'R$ 0.00'")
         # self.precoinput.textChanged[str].connect(self.check_disable)
         self.layout.addWidget(self.precoinput)
 
@@ -2218,7 +2392,8 @@ class ListPedidos(QMainWindow):
 
         for i in range(0, len(result)):
             for j in range(0, 6):
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(result[i][j])))
+                self.tableWidget.setItem(
+                    i, j, QTableWidgetItem(str(result[i][j])))
 
 
 class MainWindow(QMainWindow):
@@ -2227,6 +2402,7 @@ class MainWindow(QMainWindow):
         cadastro de clientes
         cadastro de Produtos
     """
+
     def __init__(self, w):
         super(MainWindow, self).__init__()
 
@@ -2248,17 +2424,20 @@ class MainWindow(QMainWindow):
         self.setStatusBar(statusbar)
 
         # botões do menu
-        btn_ac_adduser = QAction(QIcon("Icones/clientes.png"), "Listar/Cadastrar de Cliente", self)
+        btn_ac_adduser = QAction(
+            QIcon("Icones/clientes.png"), "Listar/Cadastrar de Cliente", self)
         btn_ac_adduser.triggered.connect(self.listClientes)
         btn_ac_adduser.setStatusTip("Clientes")
         toolbar.addAction(btn_ac_adduser)
 
-        btn_ac_produto = QAction(QIcon("Icones/produtos2.png"), "Lista/Cadastrar Produtos", self)
+        btn_ac_produto = QAction(
+            QIcon("Icones/produtos2.png"), "Lista/Cadastrar Produtos", self)
         btn_ac_produto.triggered.connect(self.listProdutos)
         btn_ac_produto.setStatusTip("Produtos")
         toolbar.addAction(btn_ac_produto)
 
-        btn_ac_estoque = QAction(QIcon("Icones/estoque.png"), "Lista/Cadastro Estoque", self)
+        btn_ac_estoque = QAction(
+            QIcon("Icones/estoque.png"), "Lista/Cadastro Estoque", self)
         btn_ac_estoque.triggered.connect(self.listEstoque)
         btn_ac_estoque.setStatusTip("Estoque")
         toolbar.addAction(btn_ac_estoque)
@@ -2268,7 +2447,8 @@ class MainWindow(QMainWindow):
         # btn_ac_caixa.setStatusTip("Caixa")
         # toolbar.addAction(btn_ac_caixa)
 
-        btn_ac_pedido = QAction(QIcon("Icones/produtos.png"), "Listar Pedidos", self)
+        btn_ac_pedido = QAction(
+            QIcon("Icones/produtos.png"), "Listar Pedidos", self)
         btn_ac_pedido.triggered.connect(self.listPedido)
         btn_ac_pedido.setStatusTip("Pedidos")
         toolbar.addAction(btn_ac_pedido)
@@ -2279,19 +2459,23 @@ class MainWindow(QMainWindow):
         toolbar.addAction(btn_ac_fechar)
 
         # Arquivo >> Adicionar
-        adduser_action = QAction(QIcon("Icones/clientes.png"), "Listar/Cadastrar de Cliente", self)
+        adduser_action = QAction(
+            QIcon("Icones/clientes.png"), "Listar/Cadastrar de Cliente", self)
         adduser_action.triggered.connect(self.listClientes)
         file_menu.addAction(adduser_action)
 
-        btn_ac_produto = QAction(QIcon("Icones/produtos2.png"), "Listar/Cadastrar Produtos", self)
+        btn_ac_produto = QAction(
+            QIcon("Icones/produtos2.png"), "Listar/Cadastrar Produtos", self)
         btn_ac_produto.triggered.connect(self.listProdutos)
         file_menu.addAction(btn_ac_produto)
 
-        btn_ac_pedido = QAction(QIcon("Icones/produtos.png"), "Listar Pedidos", self)
+        btn_ac_pedido = QAction(
+            QIcon("Icones/produtos.png"), "Listar Pedidos", self)
         btn_ac_pedido.triggered.connect(self.listPedido)
         file_menu.addAction(btn_ac_pedido)
 
-        btn_ac_estoque = QAction(QIcon("Icones/estoque.png"), "Lista/Cadastro Estoque", self)
+        btn_ac_estoque = QAction(
+            QIcon("Icones/estoque.png"), "Lista/Cadastro Estoque", self)
         btn_ac_estoque.triggered.connect(self.listEstoque)
         file_menu.addAction(btn_ac_estoque)
 
@@ -2299,7 +2483,8 @@ class MainWindow(QMainWindow):
         # btn_ac_caixa.triggered.connect(self.caixa)
         # file_menu.addAction(btn_ac_caixa)
 
-        btn_ac_Cupon = QAction(QIcon("Icones/impressora.png"), "Imprimir Cupon", self)
+        btn_ac_Cupon = QAction(
+            QIcon("Icones/impressora.png"), "Imprimir Cupon", self)
         btn_ac_Cupon.triggered.connect(self.cupon)
         file_menu.addAction(btn_ac_Cupon)
 
@@ -2308,7 +2493,8 @@ class MainWindow(QMainWindow):
         btn_ac_fechar.triggered.connect(self.fechaTela)
         file_menu.addAction(btn_ac_fechar)
 
-        about_action = QAction(QIcon("Icones/sobre-nos.png"), "Desenvolvedores", self)
+        about_action = QAction(
+            QIcon("Icones/sobre-nos.png"), "Desenvolvedores", self)
         about_action.triggered.connect(self.about)
         help_menu.addAction(about_action)
 
@@ -2411,9 +2597,11 @@ class MainWindow(QMainWindow):
         try:
             with open('sql/Expense Report.csv', 'w', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow((w.table.horizontalHeaderItem(0).text(), w.table.horizontalHeaderItem(1).text()))
+                writer.writerow((w.table.horizontalHeaderItem(
+                    0).text(), w.table.horizontalHeaderItem(1).text()))
                 for rowNumber in range(w.table.rowCount()):
-                    writer.writerow([w.table.item(rowNumber, 0).text(), w.table.item(rowNumber, 1).text()])
+                    writer.writerow(
+                        [w.table.item(rowNumber, 0).text(), w.table.item(rowNumber, 1).text()])
                 print('CSV file exported.')
             file.close()
         except Exception as e:
@@ -2425,7 +2613,8 @@ def telaprincipal():
     dlg = MainWindow(w)
     dlg.exec_()
 
-class LoginForm(QWidget):
+
+class LoginForm(QDialog):
     def __init__(self):
         super(LoginForm, self).__init__()
         self.setWindowTitle('Login')
@@ -2459,7 +2648,8 @@ class LoginForm(QWidget):
         usuario = self.lineEdit_username.text()
         senha = self.lineEdit_senha.text()
         self.cursor = conexao.banco.cursor()
-        comando_sql = "SELECT senha FROM usuarios WHERE nome ='{}' ".format(usuario)
+        comando_sql = "SELECT senha FROM usuarios WHERE nome ='{}' ".format(
+            usuario)
 
         try:
             self.cursor.execute(comando_sql)
