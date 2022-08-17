@@ -4,6 +4,7 @@ import os
 import sys
 import time
 from datetime import date, datetime, time
+from email import message
 from unicodedata import decimal
 
 import mysql.connector
@@ -1414,6 +1415,7 @@ class DataEntryForm(QWidget):
         self.model = QStandardItemModel()
         self.model = clientes
         completer = QCompleter(self.model, self)
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.lineEditCliente.setCompleter(completer)
         self.lineEditCliente.editingFinished.connect(self.addCliente)
 
@@ -1429,8 +1431,11 @@ class DataEntryForm(QWidget):
         self.lineEditDescription.setPlaceholderText('Descrição / Produto')
         self.model_prod = QStandardItemModel()
         self.model_prod = produtos
+
         completer_prod = QCompleter(self.model_prod, self)
+        completer_prod.setCaseSensitivity(Qt.CaseInsensitive)
         self.lineEditDescription.setCompleter(completer_prod)
+
         self.lineEditDescription.editingFinished.connect(self.addProdutos)
         self.layoutRight.addWidget(self.lineEditDescription)
 
@@ -1650,6 +1655,11 @@ class DataEntryForm(QWidget):
 
     def addCliente(self):
         entryItem = self.lineEditCliente.text()
+        # if entryItem == "":
+        #     QMessageBox.warning(
+        #         QMessageBox(), 'Atenção!', 'Insira um clinete!')
+
+        # print(entryItem)
         # print(entryItem[0::])
 
     def addProdutos(self):
@@ -1839,14 +1849,47 @@ class DataEntryForm(QWidget):
         return nr_caixa
 
     def codigoclientepedido(self):
-        nome = self.lineEditCliente.text()
+        '''Definir um codigo padrão para cliente balcão 
+        temporariamente devinido como 1. Pega o nome do 
+        cliente e o código correspondente '''
+
         self.cursor = conexao.banco.cursor()
-        comando_sql = "SELECT codigo FROM clientes WHERE nome ='{}' ".format(
-            nome)
+        nome = self.lineEditCliente.text()
+        comando_sql = "SELECT nome FROM clientes"
         self.cursor.execute(comando_sql)
-        cod_cli = self.cursor.fetchall()
-        codigo = cod_cli[0][0]
+        cli_nome = self.cursor.fetchall()
+        nome_digitado = []
+        for i in range(len(cli_nome)):
+            print('selecionando o nome: ', cli_nome[i][0])
+            nome_digitado.append(cli_nome[i][0])
+
+        if nome == "" or nome not in nome_digitado:
+            comando_sql = "SELECT codigo FROM clientes WHERE codigo ='{}' ".format(
+                1)
+            self.cursor.execute(comando_sql)
+            cod_cli = self.cursor.fetchall()
+            codigo = cod_cli[0][0]
+        else:
+            comando_sql = "SELECT codigo FROM clientes WHERE nome ='{}' ".format(
+                nome)
+            self.cursor.execute(comando_sql)
+            cod_cli = self.cursor.fetchall()
+            codigo = cod_cli[0][0]
+
         return codigo
+
+    # def codigoclientepedido(self):
+    #     nome = self.lineEditCliente.text()
+    #     if nome == "":
+    #         nome = 'Balcão'
+
+    #     self.cursor = conexao.banco.cursor()
+    #     comando_sql = "SELECT codigo FROM clientes WHERE nome ='{}' ".format(
+    #         nome)
+    #     self.cursor.execute(comando_sql)
+    #     cod_cli = self.cursor.fetchall()
+    #     codigo = cod_cli[0][0]
+    #     return codigo
 
     def gerar(self):
 
@@ -2414,7 +2457,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(w)
 
         self.setWindowTitle("SCC - SISTEMA DE CONTROLE")
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(800, 700)
 
         toolbar = QToolBar()
         toolbar.setMovable(False)
@@ -2504,8 +2547,8 @@ class MainWindow(QMainWindow):
         export_Action.triggered.connect(self.export_to_csv)
         file_menu.addAction(export_Action)
 
-        # self.show()
-        self.showFullScreen()
+        self.show()
+        # self.showFullScreen()
 
     def about(self):
         dlg = AboutDialog()
@@ -2630,7 +2673,8 @@ class LoginForm(QDialog):
 
         label_senha = QLabel('<font size="4"> Senha </font>')
         self.lineEdit_senha = QLineEdit()
-        self.lineEdit_senha.setPlaceholderText('sua senha aqui')
+        self.lineEdit_senha.setPlaceholderText('Digite sua senha aqui')
+        self.lineEdit_senha.setEchoMode(QLineEdit.Password)
         layout.addWidget(label_senha, 1, 0)
         layout.addWidget(self.lineEdit_senha, 1, 1)
 
