@@ -4,7 +4,7 @@ import csv
 import os
 import sys
 import time
-from datetime import date, datetime, time
+from datetime import date, datetime
 from email import message
 from unicodedata import decimal
 
@@ -2679,9 +2679,20 @@ class LoginForm(QDialog):
         layout.addWidget(label_senha, 1, 0)
         layout.addWidget(self.lineEdit_senha, 1, 1)
 
+        # button_login = QPushButton('Login')
+        # button_login.clicked.connect(self.check_senha)
+        # layout.addWidget(button_login, 2, 0, 1, 2)
+        # layout.setRowMinimumHeight(2, 75)
+
+         # creating progress bar
+        self.pbar = QProgressBar(self)
+        layout.addWidget(self.pbar, 2, 0, 1, 2)
+        layout.setRowMinimumHeight(2, 75)
+
         button_login = QPushButton('Login')
+        button_login.setStyleSheet('font-size: 20px; height: 30px;')
         button_login.clicked.connect(self.check_senha)
-        layout.addWidget(button_login, 2, 0, 1, 2)
+        layout.addWidget(button_login, 3, 0, 1, 1)
         layout.setRowMinimumHeight(2, 75)
 
         self.setLayout(layout)
@@ -2705,6 +2716,9 @@ class LoginForm(QDialog):
             msg.exec_()
 
         if senha == senha_bd[0][0]:
+            for i in range(101):
+                time.sleep(0.01)
+                self.pbar.setValue(i)
             self.hide()
             telaprincipal()
             msg.setText("Sucesso")
