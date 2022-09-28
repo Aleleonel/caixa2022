@@ -1,16 +1,14 @@
 import csv
+# import time, datetime, date
 import os
 import sys
 import time
-from datetime import date, datetime
-from email import message
-from sqlite3 import Cursor
+from datetime import date, datetime, time
 from unicodedata import decimal
 
 import mysql.connector
 from mysql.connector import OperationalError
 from prettytable import PLAIN_COLUMNS, PrettyTable
-from pyexpat import model
 from PyQt5 import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -228,38 +226,38 @@ class ListEstoque(QMainWindow):
 
         self.cursor = conexao.banco.cursor()
         comando_sql = """
-                      select
-                        idproduto,
+                      select                       
+                        idproduto, 
                         p.descricao,
                         coalesce(
-                            (SELECT
-                                sum(e.estoque) entrada
-                             FROM estoque e
-                             where status = 'E'
-                             and e.idproduto = i.idproduto), 0) entrada,
+                            (SELECT 
+                                sum(e.estoque) entrada 
+                             FROM estoque e 		
+                             where status = 'E' 
+                             and e.idproduto = i.idproduto), 0) entrada,  
                         coalesce(
-                            (SELECT
+                            (SELECT 
                                 sum(e.estoque) saida
-                             FROM estoque e
+                             FROM estoque e 
                              where status = 'S'
-                             and e.idproduto = i.idproduto), 0) saida,
-
+                             and e.idproduto = i.idproduto), 0) saida,  
+                         
                           coalesce(
-                              ((SELECT
-                                 sum(e.estoque) entrada
-                               FROM estoque e
-                               where status = 'E'
-                               and e.idproduto = i.idproduto) -
-                              (SELECT
+                              ((SELECT 
+                                 sum(e.estoque) entrada 
+                               FROM estoque e 		
+                               where status = 'E' 
+                               and e.idproduto = i.idproduto) -  
+                              (SELECT 
                                  sum(e.estoque) saida
-                               FROM estoque e
+                               FROM estoque e 
                                where status = 'S'
                                and e.idproduto = i.idproduto)), 0) estoque
-
+                    
                       from
                          estoque i
-                      inner join produtos p on p.codigo = i.idproduto
-                      group by
+                      inner join produtos p on p.codigo = i.idproduto    
+                      group by 
                          idproduto
         """
         self.cursor.execute(comando_sql)
@@ -305,38 +303,38 @@ class ListEstoque(QMainWindow):
 
         self.cursor = conexao.banco.cursor()
         comando_sql = """
-                             select
-                               idproduto,
-                               p.descricao,
+                             select                       
+                               idproduto, 
+                               p.descricao, 
                                coalesce(
-                                   (SELECT
-                                       sum(e.estoque) entrada
-                                    FROM estoque e
-                                    where status = 'E'
-                                    and e.idproduto = i.idproduto), 0) entrada,
+                                   (SELECT 
+                                       sum(e.estoque) entrada 
+                                    FROM estoque e 		
+                                    where status = 'E' 
+                                    and e.idproduto = i.idproduto), 0) entrada,  
                                coalesce(
-                                   (SELECT
+                                   (SELECT 
                                        sum(e.estoque) saida
-                                    FROM estoque e
+                                    FROM estoque e 
                                     where status = 'S'
-                                    and e.idproduto = i.idproduto), 0) saida,
+                                    and e.idproduto = i.idproduto), 0) saida,  
 
                                  coalesce(
-                                     ((SELECT
-                                        sum(e.estoque) entrada
-                                      FROM estoque e
-                                      where status = 'E'
-                                      and e.idproduto = i.idproduto) -
-                                     (SELECT
+                                     ((SELECT 
+                                        sum(e.estoque) entrada 
+                                      FROM estoque e 		
+                                      where status = 'E' 
+                                      and e.idproduto = i.idproduto) -  
+                                     (SELECT 
                                         sum(e.estoque) saida
-                                      FROM estoque e
+                                      FROM estoque e 
                                       where status = 'S'
                                       and e.idproduto = i.idproduto)), 0) estoque
 
                              from
                                 estoque i
-                             inner join produtos p on p.codigo = i.idproduto
-                             group by
+                             inner join produtos p on p.codigo = i.idproduto    
+                             group by 
                                 idproduto
                """
         self.cursor.execute(comando_sql)
@@ -689,8 +687,8 @@ class ListProdutos(QMainWindow):
 
         self.cursor = conexao.banco.cursor()
         comando_sql = """
-                        SELECT a.codigo, a.descricao, a.ncm, a.un, a.preco
-                        FROM controle_clientes.produtos as a
+                        SELECT a.codigo, a.descricao, a.ncm, a.un, a.preco 
+                        FROM controle_clientes.produtos as a   
                         """
 
         self.cursor.execute(comando_sql)
@@ -741,7 +739,7 @@ class ListProdutos(QMainWindow):
 
         self.cursor = conexao.banco.cursor()
         comando_sql = """
-                                SELECT a.codigo, a.descricao, a.ncm, a.un, a.preco
+                                SELECT a.codigo, a.descricao, a.ncm, a.un, a.preco 
                                 FROM controle_clientes.produtos as a ;
                                 """
         self.cursor.execute(comando_sql)
@@ -1255,7 +1253,7 @@ class FechamentoCaixa(QDialog):
 
             self.status_finalizado = [
                 resultado for resultado in self.status_final]
-            # print("Mostra a ultima linha do status", self.status_finalizado)
+            print("Mostra a ultima linha do status", self.status_finalizado)
         except:
             print("erro ao conectar")
 
@@ -1372,31 +1370,29 @@ class DataEntryForm(QWidget):
         # self.butonFecharCaixa.setEnabled(False)
         self.layoutRight.addWidget(self.butonFecharCaixa)
 
-        # try:
-        #     # varrer a tabela livro para pegar o valorcaixainiciado
-        #     self.cursor = conexao.banco.cursor()
-        #     consulta_sql = "SELECT status FROM livro ORDER BY idlivro DESC limit 1;"
-        #     self.cursor.execute(consulta_sql)
-        #     self.status_final = self.cursor.fetchall()
+        try:
+            # varrer a tabela livro para pegar o valorcaixainiciado
+            self.cursor = conexao.banco.cursor()
+            consulta_sql = "SELECT status FROM livro ORDER BY idlivro DESC limit 1;"
+            self.cursor.execute(consulta_sql)
+            self.status_final = self.cursor.fetchall()
 
-        #     self.status_finalizado = [
-        #         resultado for resultado in self.status_final]
+            self.status_finalizado = [
+                resultado for resultado in self.status_final]
+            for indice_final in range(len(self.status_finalizado)):
 
-        #     for indice_final in range(len(self.status_finalizado)):
-        #         self.status_finalizado[indice_final][0]
+                print("Mostra a ultima linha do status",
+                      self.status_finalizado[indice_final][0])
+            aberto = self.status_finalizado[indice_final][0]
+            if aberto == "I":
+                self.butonAbrirCaixa.setEnabled(False)
+                self.butonFecharCaixa.setEnabled(True)
+            else:
+                self.butonAbrirCaixa.setEnabled(True)
+                self.butonFecharCaixa.setEnabled(False)
 
-        #     aberto = self.status_finalizado[indice_final][0]
-        #     if aberto == "I":
-        #         self.butonAbrirCaixa.setEnabled(False)
-        #         # self.butonFecharCaixa.setEnabled(True)
-
-        #     else:
-        #         # self.butonAbrirCaixa.setEnabled(True)
-        #         self.butonFecharCaixa.setEnabled(False)
-        #         self.lineEditDescription.setEnabled(False)
-
-        # except (RuntimeError, TypeError, NameError):
-        #     pass
+        except:
+            print("deu erro aqui")
 
         self.lbl_titulo = QLabel("Caixa")
         self.lbl_titulo.setFont(QFont("Times", 42, QFont.Bold))
@@ -1418,7 +1414,6 @@ class DataEntryForm(QWidget):
         self.model = QStandardItemModel()
         self.model = clientes
         completer = QCompleter(self.model, self)
-        completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.lineEditCliente.setCompleter(completer)
         self.lineEditCliente.editingFinished.connect(self.addCliente)
 
@@ -1434,11 +1429,8 @@ class DataEntryForm(QWidget):
         self.lineEditDescription.setPlaceholderText('Descrição / Produto')
         self.model_prod = QStandardItemModel()
         self.model_prod = produtos
-
         completer_prod = QCompleter(self.model_prod, self)
-        completer_prod.setCaseSensitivity(Qt.CaseInsensitive)
         self.lineEditDescription.setCompleter(completer_prod)
-
         self.lineEditDescription.editingFinished.connect(self.addProdutos)
         self.layoutRight.addWidget(self.lineEditDescription)
 
@@ -1507,29 +1499,6 @@ class DataEntryForm(QWidget):
         self.lineEditDescription.textChanged[str].connect(self.check_disable)
         self.lineEditPrice.textChanged[str].connect(self.check_disable)
 
-        try:
-            # varrer a tabela livro para pegar o valorcaixainiciado
-            self.cursor = conexao.banco.cursor()
-            consulta_sql = "SELECT status FROM livro ORDER BY idlivro DESC limit 1;"
-            self.cursor.execute(consulta_sql)
-            self.status_final = self.cursor.fetchall()
-
-            self.status_finalizado = [
-                resultado for resultado in self.status_final]
-
-            for indice_final in range(len(self.status_finalizado)):
-                self.status_finalizado[indice_final][0]
-
-            aberto = self.status_finalizado[indice_final][0]
-            if aberto == "I":
-                self.butonAbrirCaixa.setEnabled(False)
-            else:
-                # self.butonAbrirCaixa.setEnabled(True)
-                self.butonFecharCaixa.setEnabled(False)
-
-        except (RuntimeError, TypeError, NameError):
-            pass
-
         self.fill_table()
 
     def abrircaixa(self):
@@ -1549,21 +1518,21 @@ class DataEntryForm(QWidget):
                 print("Mostra a ultima linha do status",
                       self.status_finalizado[indice_final][0])
             aberto = self.status_finalizado[indice_final][0]
-            if aberto != "I":
-                replay = QMessageBox.question(self, 'Window close', 'Deseja realmente Abrir o caixa?',
-                                              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-
-            if replay == QMessageBox.Yes:
+            if aberto == "I":
                 self.butonAbrirCaixa.setEnabled(False)
                 self.butonFecharCaixa.setEnabled(True)
+                QMessageBox.warning(QMessageBox(), 'Atenção!',
+                                    'Caixa já está Aberto!')
+                self.closeEvent()
+            else:
+                self.butonAbrirCaixa.setEnabled(True)
+                self.butonFecharCaixa.setEnabled(False)
                 dlg = AberturaCaixa()
                 dlg.exec()
-                self.closeEvent()
-
-        except (RuntimeError, TypeError, NameError):
-            print('RuntimeError', RuntimeError)
-            print('TypeError', TypeError)
-            print('NameError', NameError)
+                # self.butonAbrirCaixa.setEnabled(False)
+                self.butonFecharCaixa.setEnabled(False)
+        except:
+            print("deu erro aqui")
 
     def fecharcaixa(self, event):
 
@@ -1581,28 +1550,33 @@ class DataEntryForm(QWidget):
                 print("Mostra a ultima linha do status",
                       self.status_finalizado[indice_final][0])
             aberto = self.status_finalizado[indice_final][0]
+            if aberto == "F":
+                self.butonFecharCaixa.setEnabled(False)
+                QMessageBox.warning(
+                    QMessageBox(), 'Atenção!', 'Caixa já Fechado!')
+                self.butonAbrirCaixa.setEnabled(True)
+                self.closeEvent()
 
-            if aberto != "F":
+            else:
+                self.butonFecharCaixa.setEnabled(True)
+                self.butonAbrirCaixa.setEnabled(False)
                 replay = QMessageBox.question(self, 'Window close', 'Deseja realmente Fechar o caixa?',
                                               QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
-            if replay == QMessageBox.Yes:
-                self.butonFecharCaixa.setEnabled(False)
-                self.butonAbrirCaixa.setEnabled(True)
-                dataAtual = QDate.currentDate()
-                self.soma_fechamento = 0
-                valor_do_dia = []
-                decimal_lista = []
-                self.status = 'F'
-                dlg = FechamentoCaixa()
-                dlg.exec()
-            else:
-                pass
+                if replay == QMessageBox.Yes:
 
-        except (RuntimeError, TypeError, NameError):
-            print('RuntimeError', str(RuntimeError))
-            print('TypeError', str(TypeError))
-            print('NameError', str(NameError))
+                    dataAtual = QDate.currentDate()
+                    self.soma_fechamento = 0
+                    valor_do_dia = []
+                    decimal_lista = []
+                    self.status = 'F'
+                    dlg = FechamentoCaixa()
+                    dlg.exec()
+                else:
+                    pass
+
+        except:
+            print("deu erro aqui")
 
         try:
             self.cursor = conexao.banco.cursor()
@@ -1676,11 +1650,6 @@ class DataEntryForm(QWidget):
 
     def addCliente(self):
         entryItem = self.lineEditCliente.text()
-        # if entryItem == "":
-        #     QMessageBox.warning(
-        #         QMessageBox(), 'Atenção!', 'Insira um clinete!')
-
-        # print(entryItem)
         # print(entryItem[0::])
 
     def addProdutos(self):
@@ -1870,47 +1839,14 @@ class DataEntryForm(QWidget):
         return nr_caixa
 
     def codigoclientepedido(self):
-        '''Definir um codigo padrão para cliente balcão
-        temporariamente devinido como 1. Pega o nome do
-        cliente e o código correspondente '''
-
-        self.cursor = conexao.banco.cursor()
         nome = self.lineEditCliente.text()
-        comando_sql = "SELECT nome FROM clientes"
+        self.cursor = conexao.banco.cursor()
+        comando_sql = "SELECT codigo FROM clientes WHERE nome ='{}' ".format(
+            nome)
         self.cursor.execute(comando_sql)
-        cli_nome = self.cursor.fetchall()
-        nome_digitado = []
-        for i in range(len(cli_nome)):
-            print('selecionando o nome: ', cli_nome[i][0])
-            nome_digitado.append(cli_nome[i][0])
-
-        if nome == "" or nome not in nome_digitado:
-            comando_sql = "SELECT codigo FROM clientes WHERE codigo ='{}' ".format(
-                1)
-            self.cursor.execute(comando_sql)
-            cod_cli = self.cursor.fetchall()
-            codigo = cod_cli[0][0]
-        else:
-            comando_sql = "SELECT codigo FROM clientes WHERE nome ='{}' ".format(
-                nome)
-            self.cursor.execute(comando_sql)
-            cod_cli = self.cursor.fetchall()
-            codigo = cod_cli[0][0]
-
+        cod_cli = self.cursor.fetchall()
+        codigo = cod_cli[0][0]
         return codigo
-
-    # def codigoclientepedido(self):
-    #     nome = self.lineEditCliente.text()
-    #     if nome == "":
-    #         nome = 'Balcão'
-
-    #     self.cursor = conexao.banco.cursor()
-    #     comando_sql = "SELECT codigo FROM clientes WHERE nome ='{}' ".format(
-    #         nome)
-    #     self.cursor.execute(comando_sql)
-    #     cod_cli = self.cursor.fetchall()
-    #     codigo = cod_cli[0][0]
-    #     return codigo
 
     def gerar(self):
 
@@ -2066,15 +2002,15 @@ class EfetivaPedidoCaixa(QDialog):
 
         self.cursor = conexao.banco.cursor()
         comando_sql = """
-                        select
-                            p.codigo,
+                        select 
+                            p.codigo, 
                             p.descricao,
                             e.quantidade,
-                            p.preco,
+                            p.preco,    
                             e.valor_total
-                        from
+                        from 
                             produtos p
-                        inner join pedidocaixa e on p.codigo = e.cod_produto
+                        inner join pedidocaixa e on p.codigo = e.cod_produto 
                         AND nr_caixa = {0}""".format(str(self.nr_caixa))
 
         self.cursor.execute(comando_sql)
@@ -2333,6 +2269,15 @@ class ListPedidos(QMainWindow):
         self.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         self.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
 
+        ##########################################################################################################
+        self.layout = QHBoxLayout()
+        self.horizontalGroupBox = QGroupBox("Teste")
+
+        self.precoinput = QLineEdit()
+        self.layout.addWidget(self.precoinput)
+        self.horizontalGroupBox.setLayout(self.layout)
+        #####################################################################################
+
         # criar uma tabela centralizada
         self.tableWidget = QTableWidget()
         self.setCentralWidget(self.tableWidget)
@@ -2354,27 +2299,28 @@ class ListPedidos(QMainWindow):
 
         self.cursor = conexao.banco.cursor()
 
-        comando_sql = """ SELECT
-                            nr_caixa,
-                            cod_produto,
+        """LEFT JOIN controle_clientes.precos as b
+                on b.idprecos = a.codigo
+        """
+        comando_sql = """ SELECT 
+                            nr_caixa, 
+                            cod_produto, 
                             p.descricao,
-                            quantidade,
+                            quantidade, 
                             valor_total,
                             ultupdate
-                        FROM
-                            pedidocaixa
+                        FROM 
+                            pedidocaixa 
                         LEFT JOIN produtos as p
                         ON cod_produto = p.codigo
-                        order by
+                        order by 
                             ultupdate desc
                     """
 
         self.cursor.execute(comando_sql)
         result = self.cursor.fetchall()
-        # result = self.cursor.fetchone()[0::]
 
         self.tableWidget.setRowCount(len(result))
-        self.tableWidget.resizeRowsToContents()
         self.tableWidget.setColumnCount(6)
 
         for i in range(0, len(result)):
@@ -2396,85 +2342,46 @@ class ListPedidos(QMainWindow):
         btn_ac_refresch.setStatusTip("Atualizar")
         toolbar.addAction(btn_ac_refresch)
 
-        self.buscainput = QLineEdit()
-        nro_pedido = self.buscainput.text()
-        busca_nro_pedido = nro_pedido
-        # self.buscainput.textChanged.connect(busca_nro_pedido)
-        toolbar.addWidget(self.buscainput)
-
-        btn_ac_busca = QAction(
-            QIcon("Icones/pesquisa.png"), "Filtra pedidos", self)
-        # btn_ac_busca.triggered.connect(self.filtraPedidos)
-        btn_ac_busca.triggered.connect(
-            lambda: self.filtraPedidos(self.buscaNro()))
-        btn_ac_busca.setStatusTip("Filtro")
-        toolbar.addAction(btn_ac_busca)
-
         self.show()
-        # self.loaddatapedido()
+        self.loaddatapedido()
 
-    def buscaNro(self):
-               
-        busca_nro_pedido = self.buscainput.text()
-        return busca_nro_pedido
+    def criaLayout(self):
+        self.layout = QHBoxLayout()
+        self.horizontalGroupBox = QGroupBox("Teste")
+        self.layout.addWidget(self.horizontalGroupBox)
+        self.setLayout(self.layout)
 
-    def filtraPedidos(self, busca_nro_pedido):
+        self.lbl_finaliza = QLabel()
+        self.lbl_finaliza.setText('FINALIZA PEDIDO')
+        self.lbl_finaliza.setFont(QFont("Times", 12, QFont.Bold))
+        self.lbl_finaliza.setAlignment(Qt.AlignCenter)
+        # self.lbl_total.setStyleSheet("border-radius: 25px;border: 1px solid black;")
+        self.layout.addWidget(self.lbl_finaliza)
 
-        self.busca_nro_pedido = busca_nro_pedido
-        try:
-            self.cursor = conexao.banco.cursor()
-
-            comando_sql = """ SELECT
-                                nr_caixa,
-                                cod_produto,
-                                p.descricao,
-                                quantidade,
-                                valor_total,
-                                ultupdate
-                            FROM
-                                pedidocaixa
-                            LEFT JOIN produtos as p
-                            ON cod_produto = p.codigo
-                            order by
-                                ultupdate desc
-                        """
-
-            self.cursor.execute(comando_sql)
-            result = self.cursor.fetchall()
-
-            self.tableWidget.setRowCount(len(result))
-            self.tableWidget.resizeRowsToContents()
-            self.tableWidget.setColumnCount(6)
-
-            pedido = []
-            x = [list(result[x]) for x in range(len(result))]
-            for i in range(len(x)):
-                if x[i][0] == int(self.busca_nro_pedido):
-                    pedido.append(x[i])
-                    for i in range(0, len(pedido)):
-                        for j in range(0, 6):
-                            self.tableWidget.setItem(
-                                i, j, QTableWidgetItem(str(pedido[i][j])))
-
-        except:
-            print("Falhou ao tentar ler os dados da tabela")
+        self.precoinput = QLineEdit()
+        self.onlyFloat = QDoubleValidator()
+        self.precoinput.setValidator(self.onlyFloat)
+        self.precoinput.setPlaceholderText(
+            "Digite o valor recebido aqui - 'R$ 0.00'")
+        # self.precoinput.textChanged[str].connect(self.check_disable)
+        self.layout.addWidget(self.precoinput)
 
     def loaddatapedido(self):
 
         self.cursor = conexao.banco.cursor()
 
-        comando_sql = """ SELECT
-                                   nr_caixa,
-                                   cod_produto,
+        comando_sql = """ SELECT 
+                                   nr_caixa, 
+                                   cod_produto, 
                                    p.descricao,
-                                   quantidade,
+                                   quantidade, 
                                    valor_total,
                                    ultupdate
-                               FROM
-                                   pedidocaixa
+                               FROM 
+                                   pedidocaixa 
                                LEFT JOIN produtos as p
                                ON cod_produto = p.codigo
-                               order by
+                               order by 
                                    ultupdate desc
                            """
         self.cursor.execute(comando_sql)
@@ -2499,13 +2406,6 @@ class MainWindow(QMainWindow):
     def __init__(self, w):
         super(MainWindow, self).__init__()
 
-        self.label = QLabel(self)
-
-        self.pixmap = QPixmap("img/fundo.jpg")
-        self.label.setPixmap(self.pixmap)
-        self.label.resize(self.pixmap.width(),
-                          self.pixmap.height())
-
         self.setWindowIcon(QIcon('Icones/perfil.png'))
 
         # cria um menu
@@ -2514,7 +2414,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(w)
 
         self.setWindowTitle("SCC - SISTEMA DE CONTROLE")
-        self.setMinimumSize(800, 700)
+        self.setMinimumSize(800, 600)
 
         toolbar = QToolBar()
         toolbar.setMovable(False)
@@ -2604,8 +2504,8 @@ class MainWindow(QMainWindow):
         export_Action.triggered.connect(self.export_to_csv)
         file_menu.addAction(export_Action)
 
-        self.show()
-        # self.showFullScreen()
+        # self.show()
+        self.showFullScreen()
 
     def about(self):
         dlg = AboutDialog()
@@ -2730,20 +2630,13 @@ class LoginForm(QDialog):
 
         label_senha = QLabel('<font size="4"> Senha </font>')
         self.lineEdit_senha = QLineEdit()
-        self.lineEdit_senha.setPlaceholderText('Digite sua senha aqui')
-        self.lineEdit_senha.setEchoMode(QLineEdit.Password)
+        self.lineEdit_senha.setPlaceholderText('sua senha aqui')
         layout.addWidget(label_senha, 1, 0)
         layout.addWidget(self.lineEdit_senha, 1, 1)
 
-        # creating progress bar
-        self.pbar = QProgressBar(self)
-        layout.addWidget(self.pbar, 2, 0, 1, 2)
-        layout.setRowMinimumHeight(2, 75)
-
         button_login = QPushButton('Login')
-        button_login.setStyleSheet('font-size: 20px; height: 30px;')
         button_login.clicked.connect(self.check_senha)
-        layout.addWidget(button_login, 3, 0, 1, 1)
+        layout.addWidget(button_login, 2, 0, 1, 2)
         layout.setRowMinimumHeight(2, 75)
 
         self.setLayout(layout)
@@ -2767,9 +2660,6 @@ class LoginForm(QDialog):
             msg.exec_()
 
         if senha == senha_bd[0][0]:
-            for i in range(101):
-                time.sleep(0.01)
-                self.pbar.setValue(i)
             self.hide()
             telaprincipal()
             msg.setText("Sucesso")
