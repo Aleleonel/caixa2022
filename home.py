@@ -4,10 +4,13 @@ import sys
 import time
 from datetime import date, datetime
 from email import message
+from logging import warning
+from operator import is_not
 from sqlite3 import Cursor
 from unicodedata import decimal
 
 import mysql.connector
+from certifi import where
 from mysql.connector import OperationalError
 from prettytable import PLAIN_COLUMNS, PrettyTable
 from pyexpat import model
@@ -2354,7 +2357,7 @@ class ListPedidos(QMainWindow):
 
         self.cursor = conexao.banco.cursor()
 
-        comando_sql = """ SELECT
+        sql = """ SELECT
                             nr_caixa,
                             cod_produto,
                             p.descricao,
@@ -2362,12 +2365,15 @@ class ListPedidos(QMainWindow):
                             valor_total,
                             ultupdate
                         FROM
-                            pedidocaixa
+                            pedidocaixa as pd
                         LEFT JOIN produtos as p
                         ON cod_produto = p.codigo
-                        order by
-                            ultupdate desc
+                        
                     """
+
+        where = """ where pd.ultupdate >= curdate()"""
+
+        comando_sql = sql + where
 
         self.cursor.execute(comando_sql)
         result = self.cursor.fetchall()
@@ -2397,10 +2403,16 @@ class ListPedidos(QMainWindow):
         toolbar.addAction(btn_ac_refresch)
 
         self.buscainput = QLineEdit()
-        nro_pedido = self.buscainput.text()
-        busca_nro_pedido = nro_pedido
-        # self.buscainput.textChanged.connect(busca_nro_pedido)
+        # nro_pedido = self.buscainput.text()
+        # busca_nro_pedido = nro_pedido
+        # # self.buscainput.textChanged.connect(busca_nro_pedido)
         toolbar.addWidget(self.buscainput)
+
+        # creating a QDateEdit widget
+        self.data = QDateEdit()
+        self.data.editingFinished.connect(
+            lambda: (self.date_method(self.data)))
+        toolbar.addWidget(self.data)
 
         btn_ac_busca = QAction(
             QIcon("Icones/pesquisa.png"), "Filtra pedidos", self)
@@ -2413,18 +2425,16 @@ class ListPedidos(QMainWindow):
         self.show()
         # self.loaddatapedido()
 
-    def buscaNro(self):
-               
-        busca_nro_pedido = self.buscainput.text()
-        return busca_nro_pedido
+    def date_method(self, data):
+        print("chamou")
+        # getting the date
+        self.data_value = data.date().toPyDate()
+        print(self.data_value)
 
-    def filtraPedidos(self, busca_nro_pedido):
-
-        self.busca_nro_pedido = busca_nro_pedido
         try:
             self.cursor = conexao.banco.cursor()
 
-            comando_sql = """ SELECT
+            sql = """ SELECT
                                 nr_caixa,
                                 cod_produto,
                                 p.descricao,
@@ -2433,11 +2443,13 @@ class ListPedidos(QMainWindow):
                                 ultupdate
                             FROM
                                 pedidocaixa
-                            LEFT JOIN produtos as p
-                            ON cod_produto = p.codigo
-                            order by
-                                ultupdate desc
-                        """
+                            LEFT JOIN produtos as p ON cod_produto = p.codigo 
+                  """
+
+            where = """ where ultupdate = """ + self.data_value
+            print(self.data_value)
+
+            comando_sql = sql + where
 
             self.cursor.execute(comando_sql)
             result = self.cursor.fetchall()
@@ -2449,12 +2461,72 @@ class ListPedidos(QMainWindow):
             pedido = []
             x = [list(result[x]) for x in range(len(result))]
             for i in range(len(x)):
-                if x[i][0] == int(self.busca_nro_pedido):
-                    pedido.append(x[i])
-                    for i in range(0, len(pedido)):
-                        for j in range(0, 6):
-                            self.tableWidget.setItem(
-                                i, j, QTableWidgetItem(str(pedido[i][j])))
+                # if x[i][0] == int(self.busca_nro_pedido):
+                pedido.append(x[i])
+            if (len(pedido)) == 0:
+                pass
+
+            else:
+                for i in range(0, len(pedido)):
+                    for j in range(0, 6):
+                        self.tableWidget.setItem(
+                            i, j, QTableWidgetItem(str(pedido[i][j])))
+
+        except:
+            print("Falhou ao tentar ler uma data")
+
+    def buscaNro(self):
+
+        busca_nro_pedido = self.buscainput.text()
+        return busca_nro_pedido
+
+    def filtraPedidos(self, busca_nro_pedido):
+
+        self.busca_nro_pedido = busca_nro_pedido
+        try:
+            self.cursor = conexao.banco.cursor()
+
+            sql = """ SELECT
+                                nr_caixa,
+                                cod_produto,
+                                p.descricao,
+                                quantidade,
+                                valor_total,
+                                ultupdate
+                            FROM
+                                pedidocaixa
+                            LEFT JOIN produtos as p ON cod_produto = p.codigo 
+                  """
+
+            order = """ order by
+                            ultupdate desc """
+
+            where = ""
+            if (self.busca_nro_pedido != ""):
+                where = """ where nr_caixa = """ + self.busca_nro_pedido
+
+            comando_sql = sql + where + order
+
+            self.cursor.execute(comando_sql)
+            result = self.cursor.fetchall()
+
+            self.tableWidget.setRowCount(len(result))
+            self.tableWidget.resizeRowsToContents()
+            self.tableWidget.setColumnCount(6)
+
+            pedido = []
+            x = [list(result[x]) for x in range(len(result))]
+            for i in range(len(x)):
+                # if x[i][0] == int(self.busca_nro_pedido):
+                pedido.append(x[i])
+            if (len(pedido)) == 0:
+                pass
+
+            else:
+                for i in range(0, len(pedido)):
+                    for j in range(0, 6):
+                        self.tableWidget.setItem(
+                            i, j, QTableWidgetItem(str(pedido[i][j])))
 
         except:
             print("Falhou ao tentar ler os dados da tabela")
@@ -2487,6 +2559,23 @@ class ListPedidos(QMainWindow):
             for j in range(0, 6):
                 self.tableWidget.setItem(
                     i, j, QTableWidgetItem(str(result[i][j])))
+
+    def showPedido(self):
+        dlg = Show_pedidos()
+        dlg.exec()
+
+
+class Show_pedidos(QMainWindow):
+    def __init__(self):
+        super(Show_pedidos, self).__init__()
+        self.setWindowIcon(QIcon('Icones/produtos.png'))
+
+        self.setWindowTitle("SCC - SISTEMA DE CONTROLE DE PEDIDOS")
+        self.setMinimumSize(800, 600)
+        self.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        self.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+
+        self.show()
 
 
 class MainWindow(QMainWindow):
