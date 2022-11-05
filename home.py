@@ -6,11 +6,11 @@ from datetime import date, datetime
 from email import message
 from logging import warning
 from operator import is_not
-from sqlite3 import Cursor
+from sqlite3 import Cursor, Date
 from unicodedata import decimal
+from xml.etree.ElementTree import tostring
 
 import mysql.connector
-from certifi import where
 from mysql.connector import OperationalError
 from prettytable import PLAIN_COLUMNS, PrettyTable
 from pyexpat import model
@@ -21,7 +21,6 @@ from PyQt5.QtPrintSupport import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWidgets import QMessageBox
 from reportlab.pdfgen import canvas
-from tqdm import tqdm
 
 import conexao
 
@@ -2368,7 +2367,7 @@ class ListPedidos(QMainWindow):
                             pedidocaixa as pd
                         LEFT JOIN produtos as p
                         ON cod_produto = p.codigo
-                        
+
                     """
 
         where = """ where pd.ultupdate >= curdate()"""
@@ -2409,14 +2408,16 @@ class ListPedidos(QMainWindow):
         toolbar.addWidget(self.buscainput)
 
         # creating a QDateEdit widget
-        self.data = QDateEdit()
+        self.data = QDateEdit(self)
+        d1 = QDate(2021, 1, 1)
+        d2 = QDate(9999, 10, 10)
+        self.data.setDateRange(d1, d2)
         self.data.editingFinished.connect(
             lambda: (self.date_method(self.data)))
         toolbar.addWidget(self.data)
 
         btn_ac_busca = QAction(
             QIcon("Icones/pesquisa.png"), "Filtra pedidos", self)
-        # btn_ac_busca.triggered.connect(self.filtraPedidos)
         btn_ac_busca.triggered.connect(
             lambda: self.filtraPedidos(self.buscaNro()))
         btn_ac_busca.setStatusTip("Filtro")
@@ -2426,54 +2427,51 @@ class ListPedidos(QMainWindow):
         # self.loaddatapedido()
 
     def date_method(self, data):
-        print("chamou")
-        # getting the date
         self.data_value = data.date().toPyDate()
-        print(self.data_value)
+        self.cursor = conexao.banco.cursor()
+        sql = """ SELECT
+                        nr_caixa,
+                        cod_produto,
+                        p.descricao,
+                        quantidade,
+                        valor_total,
+                        ultupdate
+                    FROM
+                        pedidocaixa as pdc
+                    LEFT JOIN produtos as p ON cod_produto = p.codigo
+                """
 
-        try:
-            self.cursor = conexao.banco.cursor()
+        where = ""
+        if str(self.data_value):
+            where = """ where pdc.ultupdate = '{}' """.format(self.data_value)
 
-            sql = """ SELECT
-                                nr_caixa,
-                                cod_produto,
-                                p.descricao,
-                                quantidade,
-                                valor_total,
-                                ultupdate
-                            FROM
-                                pedidocaixa
-                            LEFT JOIN produtos as p ON cod_produto = p.codigo 
-                  """
+        comando_sql = sql + where
 
-            where = """ where ultupdate = """ + self.data_value
-            print(self.data_value)
+        self.cursor.execute(comando_sql)
+        result = self.cursor.fetchall()
 
-            comando_sql = sql + where
+        print("Número total de registros retornados: ", self.cursor.rowcount)
 
-            self.cursor.execute(comando_sql)
-            result = self.cursor.fetchall()
+        self.tableWidget.setRowCount(len(result))
+        self.tableWidget.resizeRowsToContents()
+        self.tableWidget.setColumnCount(6)
 
-            self.tableWidget.setRowCount(len(result))
-            self.tableWidget.resizeRowsToContents()
-            self.tableWidget.setColumnCount(6)
+        pedido = []
+        x = [list(result[x]) for x in range(len(result))]
 
-            pedido = []
-            x = [list(result[x]) for x in range(len(result))]
-            for i in range(len(x)):
-                # if x[i][0] == int(self.busca_nro_pedido):
-                pedido.append(x[i])
-            if (len(pedido)) == 0:
-                pass
+        for i in range(len(x)):
+            # if x[i][5] == (self.data_value):
+            #     print("achou", self.data_value)
+            #     pedido.clear()
+            pedido.append(x[i])
+        if (len(pedido)) == 0:
+            pass
 
-            else:
-                for i in range(0, len(pedido)):
-                    for j in range(0, 6):
-                        self.tableWidget.setItem(
-                            i, j, QTableWidgetItem(str(pedido[i][j])))
-
-        except:
-            print("Falhou ao tentar ler uma data")
+        else:
+            for i in range(0, len(pedido)):
+                for j in range(0, 6):
+                    self.tableWidget.setItem(
+                        i, j, QTableWidgetItem(str(pedido[i][j])))
 
     def buscaNro(self):
 
