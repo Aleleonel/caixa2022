@@ -2404,17 +2404,26 @@ class ListPedidos(QMainWindow):
         self.buscainput = QLineEdit()
         # nro_pedido = self.buscainput.text()
         # busca_nro_pedido = nro_pedido
-        # # self.buscainput.textChanged.connect(busca_nro_pedido)
+        self.buscainput.setStatusTip("número do pedido")
         toolbar.addWidget(self.buscainput)
+
+        self.soma_pedido = QLabel()
+        toolbar.addWidget(self.soma_pedido)
 
         # creating a QDateEdit widget
         self.data = QDateEdit(self)
         d1 = QDate(2021, 1, 1)
         d2 = QDate(9999, 10, 10)
         self.data.setDateRange(d1, d2)
-        self.data.editingFinished.connect(
-            lambda: (self.date_method(self.data)))
         toolbar.addWidget(self.data)
+
+        self.data2 = QDateEdit(self)
+        d1 = QDate(2021, 1, 1)
+        d2 = QDate(9999, 10, 10)
+        self.data2.setDateRange(d1, d2)
+        self.data2.editingFinished.connect(
+            lambda: (self.date_method(self.data, self.data2)))
+        toolbar.addWidget(self.data2)
 
         btn_ac_busca = QAction(
             QIcon("Icones/pesquisa.png"), "Filtra pedidos", self)
@@ -2426,8 +2435,10 @@ class ListPedidos(QMainWindow):
         self.show()
         # self.loaddatapedido()
 
-    def date_method(self, data):
+    def date_method(self, data, data2):
         self.data_value = data.date().toPyDate()
+        self.data_value2 = data2.date().toPyDate()
+
         self.cursor = conexao.banco.cursor()
         sql = """ SELECT
                         nr_caixa,
@@ -2443,14 +2454,13 @@ class ListPedidos(QMainWindow):
 
         where = ""
         if str(self.data_value):
-            where = """ where pdc.ultupdate = '{}' """.format(self.data_value)
+            where = """ where pdc.ultupdate BETWEEN '{}' and '{}' """.format(
+                self.data_value, self.data_value2)
 
         comando_sql = sql + where
 
         self.cursor.execute(comando_sql)
         result = self.cursor.fetchall()
-
-        print("Número total de registros retornados: ", self.cursor.rowcount)
 
         self.tableWidget.setRowCount(len(result))
         self.tableWidget.resizeRowsToContents()
@@ -2459,11 +2469,11 @@ class ListPedidos(QMainWindow):
         pedido = []
         x = [list(result[x]) for x in range(len(result))]
 
+        soma_pedido = 0
         for i in range(len(x)):
-            # if x[i][5] == (self.data_value):
-            #     print("achou", self.data_value)
-            #     pedido.clear()
             pedido.append(x[i])
+            soma_pedido += x[i][4]
+
         if (len(pedido)) == 0:
             pass
 
@@ -2472,6 +2482,8 @@ class ListPedidos(QMainWindow):
                 for j in range(0, 6):
                     self.tableWidget.setItem(
                         i, j, QTableWidgetItem(str(pedido[i][j])))
+        print("imprimindo x", soma_pedido)
+        self.soma_pedido.setText("   Total: R$"+(str(soma_pedido) + "   "))
 
     def buscaNro(self):
 
@@ -2514,9 +2526,12 @@ class ListPedidos(QMainWindow):
 
             pedido = []
             x = [list(result[x]) for x in range(len(result))]
+
+            soma_pedido = 0
             for i in range(len(x)):
-                # if x[i][0] == int(self.busca_nro_pedido):
                 pedido.append(x[i])
+                soma_pedido += x[i][4]
+
             if (len(pedido)) == 0:
                 pass
 
@@ -2525,6 +2540,7 @@ class ListPedidos(QMainWindow):
                     for j in range(0, 6):
                         self.tableWidget.setItem(
                             i, j, QTableWidgetItem(str(pedido[i][j])))
+            self.soma_pedido.setText("   Total: R$"+(str(soma_pedido) + "   "))
 
         except:
             print("Falhou ao tentar ler os dados da tabela")
@@ -2553,10 +2569,17 @@ class ListPedidos(QMainWindow):
         self.tableWidget.setRowCount(len(result))
         self.tableWidget.setColumnCount(6)
 
+        x = [list(result[x]) for x in range(len(result))]
+
+        soma_pedido = 0
+        for i in range(len(x)):
+            soma_pedido += x[i][4]
+
         for i in range(0, len(result)):
             for j in range(0, 6):
                 self.tableWidget.setItem(
                     i, j, QTableWidgetItem(str(result[i][j])))
+        self.soma_pedido.setText("   Total: R$"+(str(soma_pedido) + "   "))
 
     def showPedido(self):
         dlg = Show_pedidos()
