@@ -24,6 +24,22 @@
     git branch -M main
     git remote add origin git@github.com:Aleleonel/caixa.git
     git push -u origin main
+    
+# Objetivo do projeto
+
+	- Sistema de Controle de Estoque
+	- Sistema de Controle de Caixa
+
+	- Sistema de Geração de Nota Fiscal
+    - Sistema de Controle Financeiro
+
+	- Sistema de Cadastro de Produtos
+	
+	- Sistema de Controle de Compra e Venda
+	- Sistema de Relatório de Receitas Brutas
+    
+	- Sistema de Gestão de Documentos
+	- Sistema de Calendário e Agendamento
 
 # issues
 
@@ -37,7 +53,6 @@
 
  # RELACIONADO
 
- - INSERIR BOTÃO SAIR EM CONSULTA ESTOQUE
  - INSERIR OS PRODUTOS PELO NUMERO DO CÓDIGO OU PELA DESCRIÇÃO.
  - CRIAR UMA TABELA PARA CADASTRAR UNIDADE DE MEDIDA
  - MODIFICAR CONSULTA DE PRODUTOS

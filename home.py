@@ -301,6 +301,10 @@ class ListEstoque(QMainWindow):
         btn_ac_search.setStatusTip("Pesquisar")
         toolbar.addAction(btn_ac_search)
 
+        btn_ac_sair = QAction(QIcon("Icones/sair.png"), "Sair", self)
+        btn_ac_sair.triggered.connect(self.fechar)
+        toolbar.addAction(btn_ac_sair)
+
         self.show()
 
     def loaddata(self):
@@ -360,6 +364,9 @@ class ListEstoque(QMainWindow):
     def search(self):
         dlg = SearchEstoque()
         dlg.exec_()
+
+    def fechar(self):
+        self.close()
 
 
 class SearchEstoque(QDialog):
@@ -809,6 +816,10 @@ class ListProdutos(QMainWindow):
         btn_ac_search.setStatusTip("Pesquisar")
         toolbar.addAction(btn_ac_search)
 
+        btn_ac_sair = QAction(QIcon("Icones/sair.png"), "Sair", self)
+        btn_ac_sair.triggered.connect(self.fecha)
+        toolbar.addAction(btn_ac_sair)
+
         self.show()
 
     def loaddata(self):
@@ -842,6 +853,9 @@ class ListProdutos(QMainWindow):
         dlg = DeleteProduto()
         dlg.exec_()
         self.loaddata()
+
+    def fecha(self):
+        self.close()
 
 
 class SearchProdutos(QDialog):
@@ -1036,7 +1050,7 @@ class ListClientes(QMainWindow):
         toolbar.addAction(btn_ac_delete)
 
         btn_ac_sair = QAction(QIcon("Icones/sair.png"), "Sair", self)
-        # btn_ac_sair.triggered.connect(self.fechaTela)
+        btn_ac_sair.triggered.connect(self.fechar)
         btn_ac_sair.setStatusTip("Sair ")
         toolbar.addAction(btn_ac_sair)
 
@@ -1070,6 +1084,9 @@ class ListClientes(QMainWindow):
         dlg = DeleteCliente()
         dlg.exec_()
         self.loaddata()
+
+    def fechar(self):
+        self.close()
 
 
 class SearchClientes(QDialog):
@@ -2326,6 +2343,11 @@ class ListPedidos(QMainWindow):
             lambda: self.filtraPedidos(self.buscaNro()))
         btn_ac_busca.setStatusTip("Filtro")
         toolbar.addAction(btn_ac_busca)
+
+        btn_ac_sair = QAction(QIcon("Icones/sair.png"), "Sair", self)
+        btn_ac_sair.triggered.connect(self.fechar)
+        toolbar.addAction(btn_ac_sair)
+
         self.show()
         # self.loaddatapedido()
 
@@ -2482,6 +2504,9 @@ class ListPedidos(QMainWindow):
     def showPedido(self):
         dlg = Show_pedidos()
         dlg.exec()
+
+    def fechar(self):
+        self.close()
 
 
 class Show_pedidos(QMainWindow):
