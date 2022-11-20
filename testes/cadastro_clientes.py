@@ -93,6 +93,9 @@ class CadastroClientes(QDialog):
         self.addresscomplemento = QLineEdit()
         self.addresscomplemento.setPlaceholderText("Complemento")
 
+        self.addresscidade = QLineEdit()
+        self.addresscidade.setPlaceholderText("Cidade")
+
         self.cep = QLineEdit()
         self.cep.setPlaceholderText("CEP")
 
@@ -104,6 +107,7 @@ class CadastroClientes(QDialog):
         layout.addWidget(self.addresscomplemento)
         layout.addWidget(self.ederecoNumero)
         layout.addWidget(self.cep)
+        layout.addWidget(self.addresscidade)
 
         layout.addStretch(1)
         self.GroupBox4.setLayout(layout)

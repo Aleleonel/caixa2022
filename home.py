@@ -434,57 +434,129 @@ class SearchEstoque(QDialog):
 
 
 class CadastroClientes(QDialog):
-    """
-        Define uma nova janela onde cadastramos os clientes
-    """
-
     def __init__(self, *args, **kwargs):
         super(CadastroClientes, self).__init__(*args, **kwargs)
 
-        self.QBtn = QPushButton()
-        self.QBtn.setText("Registrar")
+        disableWidgetsCheckBox = QCheckBox("&Disable widgets")
 
-        # Configurações do titulo da Janela
-        self.setWindowTitle("Add Cliente :")
-        self.setFixedWidth(300)
-        self.setFixedHeight(300)
+        self.createTopLeftGroupBox()
+        self.createGroupBoxSalvar()
+        self.createGroupBox()
+        self.createEndercoGroupBox()
 
-        self.setWindowTitle("Dados do Cliente :")
-        self.setFixedWidth(300)
-        self.setFixedHeight(300)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox1.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox2.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox3.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox4.setDisabled)
 
-        self.QBtn.clicked.connect(self.addcliente)
+        topLayout = QHBoxLayout()
+        topLayout.addStretch(1)
+        topLayout.addWidget(disableWidgetsCheckBox)
+
+        mainLayout = QGridLayout()
+        mainLayout.addLayout(topLayout, 0, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox1, 1, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox2, 2, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox3, 4, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox4, 3, 0, 1, 2)
+        mainLayout.setRowStretch(1, 1)
+        mainLayout.setRowStretch(2, 1)
+        mainLayout.setColumnStretch(0, 1)
+        mainLayout.setColumnStretch(1, 1)
+        self.setLayout(mainLayout)
+
+        self.setWindowTitle("CADASTRO DE CLIENTES")
+
+    def createGroupBox(self):
+        self.GroupBox2 = QGroupBox()
+
+        layout = QHBoxLayout()
+
+        self.cpfinput = QLineEdit()
+        self.cpfinput.setPlaceholderText("Cpf")
+
+        self.rginput = QLineEdit()
+        self.rginput.setPlaceholderText("R.G")
+
+        self.mobileinput = QLineEdit()
+        self.mobileinput.setPlaceholderText("Telefone NO.")
+
+        layout.addWidget(self.cpfinput)
+        layout.addWidget(self.rginput)
+
+        layout.addWidget(self.mobileinput)
+
+        layout.addStretch(1)
+        self.GroupBox2.setLayout(layout)
+
+    def createTopLeftGroupBox(self):
+        self.GroupBox1 = QGroupBox("Cadastro de Clientes")
 
         layout = QVBoxLayout()
 
         # Insere o ramo ou tipo /
         self.branchinput = QComboBox()
         self.branchinput.addItem("Pessoa Física")
-        self.branchinput.addItem("Empresa")
-        layout.addWidget(self.branchinput)
+        self.branchinput.addItem("Pessoa Jurídica")
 
         self.nameinput = QLineEdit()
         self.nameinput.setPlaceholderText("Nome / Razão")
+
+        layout.addWidget(self.branchinput)
         layout.addWidget(self.nameinput)
 
-        self.cpfinput = QLineEdit()
-        self.cpfinput.setPlaceholderText("Cpf")
-        layout.addWidget(self.cpfinput)
+        layout.addStretch(1)
+        self.GroupBox1.setLayout(layout)
 
-        self.rginput = QLineEdit()
-        self.rginput.setPlaceholderText("R.G")
-        layout.addWidget(self.rginput)
+    def createEndercoGroupBox(self):
+        self.GroupBox4 = QGroupBox()
 
-        self.mobileinput = QLineEdit()
-        self.mobileinput.setPlaceholderText("Telefone NO.")
-        layout.addWidget(self.mobileinput)
+        layout = QVBoxLayout()
 
         self.addressinput = QLineEdit()
-        self.addressinput.setPlaceholderText("Endereço")
-        layout.addWidget(self.addressinput)
+        self.addressinput.setPlaceholderText("Logradouro")
 
-        layout.addWidget(self.QBtn)
-        self.setLayout(layout)
+        self.bairro = QLineEdit()
+        self.bairro.setPlaceholderText("Bairro")
+
+        self.addresscomplemento = QLineEdit()
+        self.addresscomplemento.setPlaceholderText("Complemento")
+
+        self.addresscidade = QLineEdit()
+        self.addresscidade.setPlaceholderText("Cidade")
+
+        self.cep = QLineEdit()
+        self.cep.setPlaceholderText("CEP")
+
+        self.ederecoNumero = QLineEdit()
+        self.ederecoNumero.setPlaceholderText("Nr.")
+
+        layout.addWidget(self.addressinput)
+        layout.addWidget(self.bairro)
+        layout.addWidget(self.addresscomplemento)
+        layout.addWidget(self.ederecoNumero)
+        layout.addWidget(self.cep)
+        layout.addWidget(self.addresscidade)
+
+        layout.addStretch(1)
+        self.GroupBox4.setLayout(layout)
+
+    def createGroupBoxSalvar(self):
+        self.GroupBox3 = QGroupBox("Salvar Cadastro")
+
+        self.defaultPushButton = QPushButton("Salvar")
+        self.defaultPushButton.setDefault(True)
+        self.defaultPushButton.clicked.connect(self.addcliente)
+
+        self.defaultPushButton2 = QPushButton("Fechar")
+        self.defaultPushButton2.setDefault(True)
+        self.defaultPushButton2.clicked.connect(self.closeCadastro)
+
+        layout = QGridLayout()
+        layout.addWidget(self.defaultPushButton, 1, 0, 1, 2)
+        layout.addWidget(self.defaultPushButton2, 2, 0, 1, 2)
+        layout.setRowStretch(5, 1)
+        self.GroupBox3.setLayout(layout)
 
     def addcliente(self):
         """
@@ -492,18 +564,17 @@ class CadastroClientes(QDialog):
         no lineedit e armazena nas variaveis
         :return:
         """
-        nome = ""
-        tipo = ""
-        cpf = ""
-        rg = ""
-        tel = ""
-        endereco = ""
+        # nome = ""
+        # tipo = ""
+        # cpf = ""
+        # rg = ""
+        # tel = ""
+        # endereco = ""
 
-        nome = self.nameinput.text()
         tipo = self.branchinput.itemText(self.branchinput.currentIndex())
+        nome = self.nameinput.text()
         cpf = self.cpfinput.text()
         rg = self.rginput.text()
-        # sem = -self.seminput.itemText(self.seminput.currentIndex())
         tel = self.mobileinput.text()
         endereco = self.addressinput.text()
 
@@ -517,15 +588,26 @@ class CadastroClientes(QDialog):
             conexao.banco.commit()
             self.cursor.close()
 
-            QMessageBox.information(
-                QMessageBox(), 'Cadastro', 'Dados inseridos com sucesso!')
-
-            self.close()
+            # limpa os campos
+            self.nameinput.setText("")
+            self.cpfinput.setText("")
+            self.rginput.setText("")
+            self.mobileinput.setText("")
+            self.addressinput.setText("")
+            self.addressinput.setText("")
+            self.bairro.setText("")
+            self.addresscomplemento.setText("")
+            self.ederecoNumero.setText("")
+            self.cep.setText("")
+            self.addresscidade.setText("")
 
         except Exception:
 
             QMessageBox.warning(
                 QMessageBox(), 'aleleonel@gmail.com', 'A inserção falhou!')
+
+    def closeCadastro(self):
+        self.close()
 
 
 class DeleteClientes(QDialog):
