@@ -548,8 +548,11 @@ class CadastroClientes(QDialog):
         self.defaultPushButton.setDefault(True)
         self.defaultPushButton.clicked.connect(self.addcliente)
 
-        self.defaultPushButton2 = QPushButton("Fechar")
+        self.defaultPushButton2 = QPushButton(self)
         self.defaultPushButton2.setDefault(True)
+        self.defaultPushButton2.setIcon(QIcon("Icones/sair.png"))
+        self.defaultPushButton2.setIconSize(QSize(20, 20))
+        self.defaultPushButton2.setMinimumHeight(25)
         self.defaultPushButton2.clicked.connect(self.closeCadastro)
 
         layout = QGridLayout()
@@ -559,17 +562,6 @@ class CadastroClientes(QDialog):
         self.GroupBox3.setLayout(layout)
 
     def addcliente(self):
-        """
-        captura as informações digitadas
-        no lineedit e armazena nas variaveis
-        :return:
-        """
-        # nome = ""
-        # tipo = ""
-        # cpf = ""
-        # rg = ""
-        # tel = ""
-        # endereco = ""
 
         tipo = self.branchinput.itemText(self.branchinput.currentIndex())
         nome = self.nameinput.text()
@@ -577,12 +569,16 @@ class CadastroClientes(QDialog):
         rg = self.rginput.text()
         tel = self.mobileinput.text()
         endereco = self.addressinput.text()
+        bairro = self.bairro.text()
+        complemento = self.addresscomplemento.text()
+        numero = self.ederecoNumero.text()
+        cep = self.cep.text()
+        cidade = self.addresscidade.text()
 
         try:
             self.cursor = conexao.banco.cursor()
-            comando_sql = "INSERT INTO clientes (tipo, nome, cpf, rg, telefone, endereco)" \
-                          "VALUES (%s,%s,%s,%s,%s,%s)"
-            dados = tipo, nome, cpf, rg, tel, endereco
+            comando_sql = "INSERT INTO clientes (tipo, nome, cpf, rg, telefone, endereco, complemento, bairro, numero, cep, cidade) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            dados = tipo, nome, cpf, rg, tel, endereco, complemento, bairro, numero, cep, cidade
             self.cursor.execute(comando_sql, dados)
 
             conexao.banco.commit()
@@ -595,6 +591,11 @@ class CadastroClientes(QDialog):
             self.mobileinput.setText("")
             self.addressinput.setText("")
             self.addressinput.setText("")
+            self.bairro.setText("")
+            self.addresscomplemento.setText("")
+            self.ederecoNumero.setText("")
+            self.cep.setText("")
+            self.addresscidade.setText("")
             self.bairro.setText("")
             self.addresscomplemento.setText("")
             self.ederecoNumero.setText("")
@@ -899,7 +900,7 @@ class ListProdutos(QMainWindow):
         toolbar.addAction(btn_ac_search)
 
         btn_ac_sair = QAction(QIcon("Icones/sair.png"), "Sair", self)
-        btn_ac_sair.triggered.connect(self.fecha)
+        btn_ac_sair.triggered.connect(self.fechar)
         toolbar.addAction(btn_ac_sair)
 
         self.show()
@@ -936,7 +937,7 @@ class ListProdutos(QMainWindow):
         dlg.exec_()
         self.loaddata()
 
-    def fecha(self):
+    def fechar(self):
         self.close()
 
 
@@ -1073,7 +1074,7 @@ class ListClientes(QMainWindow):
         # muda a cor da linha selecionada
         self.tableWidget.setAlternatingRowColors(True)
         # indica a quantidade de colunas
-        self.tableWidget.setColumnCount(7)
+        self.tableWidget.setColumnCount(13)
         # define que o cabeçalho não seja alterado
         self.tableWidget.horizontalHeader().setCascadingSectionResizes(False)
         self.tableWidget.horizontalHeader().setSortIndicatorShown(False)
@@ -1084,7 +1085,7 @@ class ListClientes(QMainWindow):
         self.tableWidget.verticalHeader().setCascadingSectionResizes(False)
         self.tableWidget.verticalHeader().setStretchLastSection(False)
         self.tableWidget.setHorizontalHeaderLabels(
-            ("Codigo", "Tipo", "Nome", "CPF", "RG", "Tel", "Endereco",))
+            ("Codigo", "Tipo", "Nome", "CPF", "RG", "Telefone", "Endereco", "Complemento", "Bairro", "Número", "CEP", "Cidade", "Data"))
 
         self.cursor = conexao.banco.cursor()
         comando_sql = "SELECT * FROM clientes"
@@ -1092,10 +1093,10 @@ class ListClientes(QMainWindow):
         result = self.cursor.fetchall()
 
         self.tableWidget.setRowCount(len(result))
-        self.tableWidget.setColumnCount(7)
+        self.tableWidget.setColumnCount(13)
 
         for i in range(0, len(result)):
-            for j in range(0, 7):
+            for j in range(0, 13):
                 self.tableWidget.setItem(
                     i, j, QTableWidgetItem(str(result[i][j])))
 
