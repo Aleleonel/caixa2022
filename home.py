@@ -10,6 +10,7 @@ from sqlite3 import Cursor, Date
 from unicodedata import decimal
 from xml.etree.ElementTree import tostring
 
+import conexao
 import mysql.connector
 from mysql.connector import OperationalError
 from prettytable import PLAIN_COLUMNS, PrettyTable
@@ -21,8 +22,6 @@ from PyQt5.QtPrintSupport import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWidgets import QMessageBox
 from reportlab.pdfgen import canvas
-
-import conexao
 
 global loginok
 
@@ -895,7 +894,7 @@ class ListProdutos(QMainWindow):
 
         btn_ac_search = QAction(
             QIcon("Icones/pesquisa.png"), "Pesquisar dados por produto", self)
-        btn_ac_search.triggered.connect(self.search)
+        btn_ac_search.triggered.connect(self.searchProduto)
         btn_ac_search.setStatusTip("Pesquisar")
         toolbar.addAction(btn_ac_search)
 
@@ -928,7 +927,7 @@ class ListProdutos(QMainWindow):
         dlg.exec()
         self.loaddata()
 
-    def search(self):
+    def searchProduto(self):
         dlg = SearchProdutos()
         dlg.exec_()
 
@@ -941,7 +940,173 @@ class ListProdutos(QMainWindow):
         self.close()
 
 
+
 class SearchProdutos(QDialog):
+    def __init__(self, parent=None):
+        super(SearchProdutos, self).__init__(parent)
+
+        disableWidgetsCheckBox = QCheckBox("&Disable widgets")
+
+        self.createTopLeftGroupBox()
+        self.createGroupBoxSalvar()
+        self.createGroupBox()
+
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox1.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox2.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox3.setDisabled)
+
+        topLayout = QHBoxLayout()
+        topLayout.addStretch(1)
+        topLayout.addWidget(disableWidgetsCheckBox)
+
+        mainLayout = QGridLayout()
+        mainLayout.addLayout(topLayout, 0, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox1, 1, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox2, 2, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox3, 4, 1, 1, 2)
+        mainLayout.setRowStretch(1, 1)
+        mainLayout.setRowStretch(2, 1)
+        mainLayout.setColumnStretch(0, 1)
+        mainLayout.setColumnStretch(1, 1)
+        self.setLayout(mainLayout)
+
+        self.setWindowTitle("CONSULTA DE PRODUTOS")
+
+    def createTopLeftGroupBox(self):
+        self.GroupBox1 = QGroupBox("Cadastro de Itens")
+
+        # Insere o ramo ou tipo  /
+        # Criar uma tabela para cadastrar unidade de medida
+        self.uninput = QComboBox()
+        self.uninput.addItem("UN")
+        self.uninput.addItem("PÇ")
+        self.uninput.addItem("KG")
+        self.uninput.addItem("LT")
+        self.uninput.addItem("PT")
+        self.uninput.addItem("CX")
+
+        self.codigo_produto = QLabel("Codigo")
+        self.cdprod = QLineEdit()
+        self.codigo_produto.setAlignment(Qt.AlignLeft)
+
+        self.codigo_ean = QLabel("EAN")
+        self.eanprod = QLineEdit()
+        self.codigo_ean.setAlignment(Qt.AlignCenter)
+
+        self.codigo_gtin = QLabel("GTIN")
+        self.gtinprod = QLineEdit()
+        self.codigo_gtin.setAlignment(Qt.AlignRight)
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.codigo_produto)
+        layout.addWidget(self.cdprod)
+
+        layout.addWidget(self.codigo_ean)
+        layout.addWidget(self.eanprod)
+
+        layout.addWidget(self.codigo_gtin)
+        layout.addWidget(self.gtinprod)
+
+        layout.addWidget(self.uninput)
+
+        layout.addStretch(1)
+        self.GroupBox1.setLayout(layout)
+
+    def createGroupBox(self):
+        self.GroupBox2 = QGroupBox()
+
+        self.label_descricao = QLabel("Descrição", self)
+        self.label_descricao.setAlignment(Qt.AlignLeft)
+        self.descricao = QLineEdit()
+        self.descricao.returnPressed.connect(self.consultaProdutolist)
+        self.descricao.setFixedSize(447, 25)
+
+        self.label_custo = QLabel("Preço de Custo", self)
+        self.label_custo.setAlignment(Qt.AlignLeft)
+        self.precocusto = QLineEdit()
+        self.precocusto.setFixedSize(107, 25)
+
+        self.label_venda = QLabel("Preço de Venda", self)
+        self.label_venda.setAlignment(Qt.AlignLeft)
+        self.preco = QLineEdit()
+        self.preco.setFixedSize(107, 25)
+
+        layout = QVBoxLayout()
+
+        layout.addWidget(self.label_descricao)
+        layout.addWidget(self.descricao)
+
+        layout.addWidget(self.label_custo)
+        layout.addWidget(self.precocusto)
+
+        layout.addWidget(self.label_venda)
+        layout.addWidget(self.preco)
+
+        layout.addStretch(1)
+        self.GroupBox2.setLayout(layout)
+
+    def createGroupBoxSalvar(self):
+        self.GroupBox3 = QGroupBox("Sair da Consulta")
+
+        self.defaultPushButton2 = QPushButton("Fechar")
+        self.defaultPushButton2.setDefault(True)
+        # self.defaultPushButton2.clicked.connect(self.closeConsulta)
+
+        layout = QGridLayout()
+        layout.addWidget(self.defaultPushButton2, 2, 0, 1, 2)
+        layout.setRowStretch(5, 1)
+        self.GroupBox3.setLayout(layout)
+    
+    def consultaProdutolist(self):
+        self.consulta = self.descricao.text().upper()
+
+        try:
+            self.cursor = conexao.banco.cursor()
+            sql = "SELECT * FROM produtos"
+                    
+            where = ""
+            if self.consulta:
+                where = """ where descricao = '{}' """.format(
+                    self.consulta)
+            
+            # print(where)
+
+            comando_sql = sql + where
+            self.cursor.execute(comando_sql)
+            result = self.cursor.fetchall()
+
+           
+
+            self.cdprod.setText(str(result[0][0]))
+            self.descricao.setText(str(result[0][1]))
+
+            # for row in range(len(result)):
+            #     searchresult = "Codigo : " + str(result[0][0]) \
+            #                    + '\n' + "Descrição : " + str(result[0][1]) \
+            #                    + '\n' + "NCM : " + str(result[0][2]) \
+            #                    + '\n' + "UN : " + str(result[0][3]) \
+            #                    + '\n' + "Preço : " + str(result[0][4])
+                
+
+
+        except Exception:
+            QMessageBox.warning(
+                QMessageBox(), 'aleleonel@gmail.com', 'A pesquisa falhou!')
+
+
+       
+    
+    def closeConsulta(self):
+        self.close()
+
+
+
+
+
+
+
+
+class SearchProdutos2(QDialog):
     """
         Define uma nova janela onde executaremos
         a busca no banco
@@ -959,7 +1124,7 @@ class SearchProdutos(QDialog):
         self.setFixedHeight(100)
 
         # Chama a função de busca
-        self.QBtn.clicked.connect(self.searchcliente)
+        self.QBtn.clicked.connect(self.searchprodutos)
 
         layout = QVBoxLayout()
 
@@ -976,7 +1141,7 @@ class SearchProdutos(QDialog):
         self.setLayout(layout)
 
     # busca o cliente pelo codigo
-    def searchcliente(self):
+    def searchprodutos(self):
         searchroll = ""
         searchroll = self.searchinput.text()
 
