@@ -977,25 +977,24 @@ class SearchProdutos(QDialog):
 
         # Insere o ramo ou tipo  /
         # Criar uma tabela para cadastrar unidade de medida
-        self.uninput = QComboBox()
-        self.uninput.addItem("UN")
-        self.uninput.addItem("PÇ")
-        self.uninput.addItem("KG")
-        self.uninput.addItem("LT")
-        self.uninput.addItem("PT")
-        self.uninput.addItem("CX")
+        self.uninput = QLineEdit()
+        self.uninput.setFixedSize(35, 25)
+        
 
         self.codigo_produto = QLabel("Codigo")
         self.cdprod = QLineEdit()
         self.codigo_produto.setAlignment(Qt.AlignLeft)
+        self.cdprod.setFixedSize(60, 25)
 
         self.codigo_ean = QLabel("EAN")
         self.eanprod = QLineEdit()
         self.codigo_ean.setAlignment(Qt.AlignCenter)
+        self.eanprod.setFixedSize(100, 25)
 
         self.codigo_gtin = QLabel("GTIN")
         self.gtinprod = QLineEdit()
         self.codigo_gtin.setAlignment(Qt.AlignRight)
+        self.gtinprod.setFixedSize(200, 25)
 
         layout = QHBoxLayout()
         layout.addWidget(self.codigo_produto)
@@ -1062,11 +1061,13 @@ class SearchProdutos(QDialog):
 
         try:
             self.cursor = conexao.banco.cursor()
-            sql = "SELECT * FROM produtos"
+            sql = "SELECT codigo, descricao, ncm, un, preco, est.preco_compra \
+                   FROM produtos \
+                   inner join controle_clientes.estoque as est"
                     
             where = ""
             if self.consulta:
-                where = """ where descricao = '{}' """.format(
+                where = """ where descricao = '{}' and est.idproduto = codigo """.format(
                     self.consulta)
             
             # print(where)
@@ -1075,18 +1076,19 @@ class SearchProdutos(QDialog):
             self.cursor.execute(comando_sql)
             result = self.cursor.fetchall()
 
+            for res in range(len(result)):
+                print(result[res])
+
            
 
             self.cdprod.setText(str(result[0][0]))
-            self.descricao.setText(str(result[0][1]))
+            self.descricao.setText(str(result[0][1]))           
+            self.eanprod.setText(str(result[0][2]))
+            self.uninput.setText(str(result[0][3]))            
+            self.preco.setText(str(result[0][4]))
+            self.precocusto.setText(str(result[1][5]))
+            self.gtinprod.setText("")
 
-            # for row in range(len(result)):
-            #     searchresult = "Codigo : " + str(result[0][0]) \
-            #                    + '\n' + "Descrição : " + str(result[0][1]) \
-            #                    + '\n' + "NCM : " + str(result[0][2]) \
-            #                    + '\n' + "UN : " + str(result[0][3]) \
-            #                    + '\n' + "Preço : " + str(result[0][4])
-                
 
 
         except Exception:
