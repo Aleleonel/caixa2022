@@ -983,6 +983,7 @@ class SearchProdutos(QDialog):
 
         self.codigo_produto = QLabel("Codigo")
         self.cdprod = QLineEdit()
+        self.cdprod.returnPressed.connect(self.consultaCodigolist)
         self.codigo_produto.setAlignment(Qt.AlignLeft)
         self.cdprod.setFixedSize(60, 25)
 
@@ -1057,7 +1058,8 @@ class SearchProdutos(QDialog):
         self.GroupBox3.setLayout(layout)
     
     def consultaProdutolist(self):
-        self.consulta = self.descricao.text().upper()
+        self.consulta = ""
+        self.consulta = self.descricao.text().upper()       
 
         try:
             self.cursor = conexao.banco.cursor()
@@ -1066,106 +1068,78 @@ class SearchProdutos(QDialog):
                    inner join controle_clientes.estoque as est"
                     
             where = ""
-            if self.consulta:
+            if self.consulta:                
+
                 where = """ where descricao = '{}' and est.idproduto = codigo """.format(
                     self.consulta)
-            
-            # print(where)
+                
+                comando_sql = sql + where
+                self.cursor.execute(comando_sql)
+                result = self.cursor.fetchall() 
 
-            comando_sql = sql + where
-            self.cursor.execute(comando_sql)
-            result = self.cursor.fetchall()
-
-            for res in range(len(result)):
-                print(result[res])
-
-           
-
-            self.cdprod.setText(str(result[0][0]))
-            self.descricao.setText(str(result[0][1]))           
-            self.eanprod.setText(str(result[0][2]))
-            self.uninput.setText(str(result[0][3]))            
-            self.preco.setText(str(result[0][4]))
-            self.precocusto.setText(str(result[1][5]))
-            self.gtinprod.setText("")
-
-
+                self.cdprod.setText(str(result[0][0]))
+                self.descricao.setText(str(result[0][1]))           
+                self.eanprod.setText(str(result[0][2]))
+                self.uninput.setText(str(result[0][3]))            
+                self.preco.setText(str(result[0][4]))
+                self.precocusto.setText(str(result[1][5]))
+                self.gtinprod.setText("") 
 
         except Exception:
             QMessageBox.warning(
-                QMessageBox(), 'aleleonel@gmail.com', 'A pesquisa falhou!')
+                QMessageBox(), 'aleleonel@gmail.com', 'Produto não cadastrado ou sem movimentação em estoque!')
 
+            self.cdprod.setText("")
+            self.descricao.setText("")           
+            self.eanprod.setText("")
+            self.uninput.setText("")            
+            self.preco.setText("")
+            self.precocusto.setText("")
+            self.gtinprod.setText("") 
+        
 
-       
+    def consultaCodigolist(self):        
+        self.consultacodigo = ""
+        self.consultacodigo = self.cdprod.text()
+
+        try:
+            self.cursor = conexao.banco.cursor()
+            sql = "SELECT codigo, descricao, ncm, un, preco, est.preco_compra \
+                   FROM produtos \
+                   inner join controle_clientes.estoque as est"
+                    
+           
+            where = ""
+            if self.consultacodigo:
+
+                where = """ where codigo = '{}' and est.idproduto = codigo """.format(self.consultacodigo)            
+
+                comando_sql = sql + where
+                self.cursor.execute(comando_sql)
+                result = self.cursor.fetchall()     
+
+                self.cdprod.setText(str(result[0][0]))
+                self.descricao.setText(str(result[0][1]))           
+                self.eanprod.setText(str(result[0][2]))
+                self.uninput.setText(str(result[0][3]))            
+                self.preco.setText(str(result[0][4]))
+                self.precocusto.setText(str(result[1][5]))
+                self.gtinprod.setText("")
+
+        except Exception:
+            QMessageBox.warning(
+                QMessageBox(), 'aleleonel@gmail.com', 'Produto não cadastrado ou sem movimentação em estoque!')
+
+            self.cdprod.setText("")
+            self.descricao.setText("")           
+            self.eanprod.setText("")
+            self.uninput.setText("")            
+            self.preco.setText("")
+            self.precocusto.setText("")
+            self.gtinprod.setText("") 
     
     def closeConsulta(self):
         self.close()
-
-
-
-
-
-
-
-
-class SearchProdutos2(QDialog):
-    """
-        Define uma nova janela onde executaremos
-        a busca no banco
-    """
-
-    def __init__(self, *args, **kwargs):
-        super(SearchProdutos, self).__init__(*args, **kwargs)
-
-        self.cursor = conexao.banco.cursor()
-        self.QBtn = QPushButton()
-        self.QBtn.setText("Procurar")
-
-        self.setWindowTitle("Pesquisar Produto")
-        self.setFixedWidth(300)
-        self.setFixedHeight(100)
-
-        # Chama a função de busca
-        self.QBtn.clicked.connect(self.searchprodutos)
-
-        layout = QVBoxLayout()
-
-        # Cria as caixas de digitaçãoe e
-        # verifica se é um numero
-        self.searchinput = QLineEdit()
-        self.onlyInt = QIntValidator()
-        self.searchinput.setValidator(self.onlyInt)
-        self.searchinput.setPlaceholderText(
-            "Codigo do Produto - somente número")
-        layout.addWidget(self.searchinput)
-
-        layout.addWidget(self.QBtn)
-        self.setLayout(layout)
-
-    # busca o cliente pelo codigo
-    def searchprodutos(self):
-        searchroll = ""
-        searchroll = self.searchinput.text()
-
-        try:
-            consulta_sql = "SELECT * FROM produtos WHERE codigo = " + \
-                str(searchroll)
-            self.cursor.execute(consulta_sql)
-            result = self.cursor.fetchall()
-
-            for row in range(len(result)):
-                searchresult = "Codigo : " + str(result[0][0]) \
-                               + '\n' + "Descrição : " + str(result[0][1]) \
-                               + '\n' + "NCM : " + str(result[0][2]) \
-                               + '\n' + "UN : " + str(result[0][3]) \
-                               + '\n' + "Preço : " + str(result[0][4])
-
-            QMessageBox.information(
-                QMessageBox(), 'Pesquisa realizada com sucesso!', searchresult)
-
-        except Exception:
-            QMessageBox.warning(
-                QMessageBox(), 'aleleonel@gmail.com', 'A pesquisa falhou!')
 
 
 class DeleteProduto(QDialog):
