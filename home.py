@@ -10,7 +10,6 @@ from sqlite3 import Cursor, Date
 from unicodedata import decimal
 from xml.etree.ElementTree import tostring
 
-import conexao
 import mysql.connector
 from mysql.connector import OperationalError
 from prettytable import PLAIN_COLUMNS, PrettyTable
@@ -22,6 +21,8 @@ from PyQt5.QtPrintSupport import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWidgets import QMessageBox
 from reportlab.pdfgen import canvas
+
+import conexao
 
 global loginok
 
@@ -940,7 +941,6 @@ class ListProdutos(QMainWindow):
         self.close()
 
 
-
 class SearchProdutos(QDialog):
     def __init__(self, parent=None):
         super(SearchProdutos, self).__init__(parent)
@@ -979,7 +979,6 @@ class SearchProdutos(QDialog):
         # Criar uma tabela para cadastrar unidade de medida
         self.uninput = QLineEdit()
         self.uninput.setFixedSize(35, 25)
-        
 
         self.codigo_produto = QLabel("Codigo")
         self.cdprod = QLineEdit()
@@ -1056,72 +1055,31 @@ class SearchProdutos(QDialog):
         layout.addWidget(self.defaultPushButton2, 2, 0, 1, 2)
         layout.setRowStretch(5, 1)
         self.GroupBox3.setLayout(layout)
-    
+
     def consultaProdutolist(self):
         self.consulta = ""
-        self.consulta = self.descricao.text().upper()       
+        self.consulta = self.descricao.text().upper()
 
         try:
             self.cursor = conexao.banco.cursor()
             sql = "SELECT codigo, descricao, ncm, un, preco, est.preco_compra \
                    FROM produtos \
                    inner join controle_clientes.estoque as est"
-                    
+
             where = ""
-            if self.consulta:                
+            if self.consulta:
 
                 where = """ where descricao = '{}' and est.idproduto = codigo """.format(
                     self.consulta)
-                
-                comando_sql = sql + where
-                self.cursor.execute(comando_sql)
-                result = self.cursor.fetchall() 
-
-                self.cdprod.setText(str(result[0][0]))
-                self.descricao.setText(str(result[0][1]))           
-                self.eanprod.setText(str(result[0][2]))
-                self.uninput.setText(str(result[0][3]))            
-                self.preco.setText(str(result[0][4]))
-                self.precocusto.setText(str(result[1][5]))
-                self.gtinprod.setText("") 
-
-        except Exception:
-            QMessageBox.warning(
-                QMessageBox(), 'aleleonel@gmail.com', 'Produto não cadastrado ou sem movimentação em estoque!')
-
-            self.cdprod.setText("")
-            self.descricao.setText("")           
-            self.eanprod.setText("")
-            self.uninput.setText("")            
-            self.preco.setText("")
-            self.precocusto.setText("")
-            self.gtinprod.setText("") 
-        
-
-    def consultaCodigolist(self):        
-        self.consultacodigo = ""
-        self.consultacodigo = self.cdprod.text()
-
-        try:
-            self.cursor = conexao.banco.cursor()
-            sql = "SELECT codigo, descricao, ncm, un, preco, est.preco_compra \
-                   FROM produtos \
-                   inner join controle_clientes.estoque as est"
-                    
-           
-            where = ""
-            if self.consultacodigo:
-
-                where = """ where codigo = '{}' and est.idproduto = codigo """.format(self.consultacodigo)            
 
                 comando_sql = sql + where
                 self.cursor.execute(comando_sql)
-                result = self.cursor.fetchall()     
+                result = self.cursor.fetchall()
 
                 self.cdprod.setText(str(result[0][0]))
-                self.descricao.setText(str(result[0][1]))           
+                self.descricao.setText(str(result[0][1]))
                 self.eanprod.setText(str(result[0][2]))
-                self.uninput.setText(str(result[0][3]))            
+                self.uninput.setText(str(result[0][3]))
                 self.preco.setText(str(result[0][4]))
                 self.precocusto.setText(str(result[1][5]))
                 self.gtinprod.setText("")
@@ -1131,13 +1089,53 @@ class SearchProdutos(QDialog):
                 QMessageBox(), 'aleleonel@gmail.com', 'Produto não cadastrado ou sem movimentação em estoque!')
 
             self.cdprod.setText("")
-            self.descricao.setText("")           
+            self.descricao.setText("")
             self.eanprod.setText("")
-            self.uninput.setText("")            
+            self.uninput.setText("")
             self.preco.setText("")
             self.precocusto.setText("")
-            self.gtinprod.setText("") 
-    
+            self.gtinprod.setText("")
+
+    def consultaCodigolist(self):
+        self.consultacodigo = ""
+        self.consultacodigo = self.cdprod.text()
+
+        try:
+            self.cursor = conexao.banco.cursor()
+            sql = "SELECT codigo, descricao, ncm, un, preco, est.preco_compra \
+                   FROM produtos \
+                   inner join controle_clientes.estoque as est"
+
+            where = ""
+            if self.consultacodigo:
+
+                where = """ where codigo = '{}' and est.idproduto = codigo """.format(
+                    self.consultacodigo)
+
+                comando_sql = sql + where
+                self.cursor.execute(comando_sql)
+                result = self.cursor.fetchall()
+
+                self.cdprod.setText(str(result[0][0]))
+                self.descricao.setText(str(result[0][1]))
+                self.eanprod.setText(str(result[0][2]))
+                self.uninput.setText(str(result[0][3]))
+                self.preco.setText(str(result[0][4]))
+                self.precocusto.setText(str(result[1][5]))
+                self.gtinprod.setText("")
+
+        except Exception:
+            QMessageBox.warning(
+                QMessageBox(), 'aleleonel@gmail.com', 'Produto não cadastrado ou sem movimentação em estoque!')
+
+            self.cdprod.setText("")
+            self.descricao.setText("")
+            self.eanprod.setText("")
+            self.uninput.setText("")
+            self.preco.setText("")
+            self.precocusto.setText("")
+            self.gtinprod.setText("")
+
     def closeConsulta(self):
         self.close()
 
@@ -1631,7 +1629,13 @@ class DataEntryForm(QWidget):
         self.close()
 
         self.cursor = conexao.banco.cursor()
-        consulta_prod = "SELECT * FROM produtos"
+
+        consulta_prod = """SELECT p.codigo, p.descricao, p.preco, p.ncm, p.un FROM produtos as p
+                            inner join controle_clientes.estoque as e
+                            where e.status = '{}'
+                            and e.estoque > '{}'
+                            and e.idproduto = p.codigo group by p.codigo""".format('E', 0)
+
         self.cursor.execute(consulta_prod)
         result_prod = self.cursor.fetchall()
         self.close()
@@ -1643,12 +1647,7 @@ class DataEntryForm(QWidget):
         self.total = list()
         self.calculaitens = list()
         self._data = {}
-        # self._data = {"Phone bill": 50.5, "Gas": 30.0, "Rent": 1850.0,
-        #                       "Car Payment": 420.0, "Comcast": 105.0,
-        #                       "Public transportation": 60.0, "Coffee": 90.5}
 
-        # DATA DO PEDIDO
-        # DATA DO PEDIDO
         d = QDate.currentDate()
         dataAtual = d.toString(Qt.ISODate)
         data_pedido = str(dataAtual)
@@ -1686,32 +1685,6 @@ class DataEntryForm(QWidget):
         self.butonFecharCaixa.setMinimumHeight(40)
         # self.butonFecharCaixa.setEnabled(False)
         self.layoutRight.addWidget(self.butonFecharCaixa)
-
-        # try:
-        #     # varrer a tabela livro para pegar o valorcaixainiciado
-        #     self.cursor = conexao.banco.cursor()
-        #     consulta_sql = "SELECT status FROM livro ORDER BY idlivro DESC limit 1;"
-        #     self.cursor.execute(consulta_sql)
-        #     self.status_final = self.cursor.fetchall()
-
-        #     self.status_finalizado = [
-        #         resultado for resultado in self.status_final]
-
-        #     for indice_final in range(len(self.status_finalizado)):
-        #         self.status_finalizado[indice_final][0]
-
-        #     aberto = self.status_finalizado[indice_final][0]
-        #     if aberto == "I":
-        #         self.butonAbrirCaixa.setEnabled(False)
-        #         # self.butonFecharCaixa.setEnabled(True)
-
-        #     else:
-        #         # self.butonAbrirCaixa.setEnabled(True)
-        #         self.butonFecharCaixa.setEnabled(False)
-        #         self.lineEditDescription.setEnabled(False)
-
-        # except (RuntimeError, TypeError, NameError):
-        #     pass
 
         self.lbl_titulo = QLabel("Caixa")
         self.lbl_titulo.setFont(QFont("Times", 42, QFont.Bold))
@@ -1991,12 +1964,6 @@ class DataEntryForm(QWidget):
 
     def addCliente(self):
         entryItem = self.lineEditCliente.text()
-        # if entryItem == "":
-        #     QMessageBox.warning(
-        #         QMessageBox(), 'Atenção!', 'Insira um clinete!')
-
-        # print(entryItem)
-        # print(entryItem[0::])
 
     def addProdutos(self):
 
@@ -2213,19 +2180,6 @@ class DataEntryForm(QWidget):
             codigo = cod_cli[0][0]
 
         return codigo
-
-    # def codigoclientepedido(self):
-    #     nome = self.lineEditCliente.text()
-    #     if nome == "":
-    #         nome = 'Balcão'
-
-    #     self.cursor = conexao.banco.cursor()
-    #     comando_sql = "SELECT codigo FROM clientes WHERE nome ='{}' ".format(
-    #         nome)
-    #     self.cursor.execute(comando_sql)
-    #     cod_cli = self.cursor.fetchall()
-    #     codigo = cod_cli[0][0]
-    #     return codigo
 
     def gerar(self):
 
