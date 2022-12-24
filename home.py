@@ -1709,6 +1709,7 @@ class DataEntryForm(QWidget):
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.lineEditCliente.setCompleter(completer)
         self.lineEditCliente.editingFinished.connect(self.addCliente)
+        self.lineEditCliente.setEnabled(False)
 
         self.layoutRight.addWidget(self.lineEditCliente)
 
@@ -1722,6 +1723,7 @@ class DataEntryForm(QWidget):
         self.lineEditDescription.setPlaceholderText('Descrição / Produto')
         self.model_prod = QStandardItemModel()
         self.model_prod = produtos
+        self.lineEditDescription.setEnabled(False)
 
         completer_prod = QCompleter(self.model_prod, self)
         completer_prod.setCaseSensitivity(Qt.CaseInsensitive)
@@ -1734,6 +1736,7 @@ class DataEntryForm(QWidget):
         self.onlyInt = QIntValidator()
         self.lineEditQtd.setValidator(self.onlyInt)
         self.lineEditQtd.setPlaceholderText('Quantidade')
+        self.lineEditQtd.setEnabled(False)
 
         self.layoutRight.addWidget(self.lineEditQtd)
 
@@ -1742,6 +1745,7 @@ class DataEntryForm(QWidget):
         self.lineEditPrice.setValidator(self.onlyFloat)
         self.lineEditPrice.setPlaceholderText('R$: Preço')
         self.layoutRight.addWidget(self.lineEditPrice)
+        self.lineEditPrice.setEnabled(False)
 
         self.lbl_total = QLabel()
         self.lbl_total.setText('R$ 0.00')
@@ -1811,6 +1815,8 @@ class DataEntryForm(QWidget):
             aberto = self.status_finalizado[indice_final][0]
             if aberto == "I":
                 self.butonAbrirCaixa.setEnabled(False)
+                self.habilitaBotoesCaixa()
+
             else:
                 # self.butonAbrirCaixa.setEnabled(True)
                 self.butonFecharCaixa.setEnabled(False)
@@ -1819,6 +1825,12 @@ class DataEntryForm(QWidget):
             pass
 
         self.fill_table()
+
+    def habilitaBotoesCaixa(self):
+        self.lineEditDescription.setEnabled(True)
+        self.lineEditCliente.setEnabled(True)
+        self.lineEditQtd.setEnabled(True)
+        self.lineEditPrice.setEnabled(True)
 
     def abrircaixa(self):
         # self.butonAbrirCaixa.setEnabled(False)
@@ -1846,6 +1858,7 @@ class DataEntryForm(QWidget):
                 self.butonFecharCaixa.setEnabled(True)
                 dlg = AberturaCaixa()
                 dlg.exec()
+                self.habilitaBotoesCaixa()
                 self.closeEvent()
 
         except (RuntimeError, TypeError, NameError):
@@ -1882,6 +1895,7 @@ class DataEntryForm(QWidget):
                 valor_do_dia = []
                 decimal_lista = []
                 self.status = 'F'
+                self.desabilitaBotoesCaixa()
                 dlg = FechamentoCaixa()
                 dlg.exec()
             else:
@@ -1961,6 +1975,13 @@ class DataEntryForm(QWidget):
 
         except Exception as e:
             print(e)
+    
+    def desabilitaBotoesCaixa(self):
+        self.lineEditDescription.setEnabled(False)
+        self.lineEditCliente.setEnabled(False)
+        self.lineEditQtd.setEnabled(False)
+        self.lineEditPrice.setEnabled(False)
+
 
     def addCliente(self):
         entryItem = self.lineEditCliente.text()
@@ -2083,6 +2104,8 @@ class DataEntryForm(QWidget):
             self.buttonAdd.setEnabled(False)
             # self.buttongerar.setEnabled(False)
 
+# Botões de cancelameno de item e
+# cancelamento pedido
     def reset_table(self):
         self.table.setRowCount(0)
         self.items = 0
