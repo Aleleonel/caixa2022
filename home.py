@@ -1975,13 +1975,12 @@ class DataEntryForm(QWidget):
 
         except Exception as e:
             print(e)
-    
+
     def desabilitaBotoesCaixa(self):
         self.lineEditDescription.setEnabled(False)
         self.lineEditCliente.setEnabled(False)
         self.lineEditQtd.setEnabled(False)
         self.lineEditPrice.setEnabled(False)
-
 
     def addCliente(self):
         entryItem = self.lineEditCliente.text()
@@ -2137,6 +2136,7 @@ class DataEntryForm(QWidget):
             row = linha
             if row > 0:
                 while row > 0:
+                    self.buttongerar.setEnabled(True)
                     row -= 1
                     col = self.table.columnCount()
                     resultado = 0
