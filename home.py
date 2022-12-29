@@ -1881,6 +1881,7 @@ class DataEntryForm(QWidget):
 
                 print("Mostra a ultima linha do status",
                       self.status_finalizado[indice_final][0])
+
             aberto = self.status_finalizado[indice_final][0]
 
             if aberto != "F":
@@ -1888,6 +1889,19 @@ class DataEntryForm(QWidget):
                                               QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
             if replay == QMessageBox.Yes:
+
+                self.cursor = conexao.banco.cursor()
+                consulta_sql = "SELECT valor FROM livro where status = 'I' and dataAtual = '2022-12-29';"
+                self.cursor.execute(consulta_sql)
+                self.valor_inicial = self.cursor.fetchall()
+
+                for val in range(len(self.valor_inicial)):
+                    print("TEM ALGUMA COISA AQUI", self.valor_inicial[val][0])
+
+                # valor_entrada = [val for val in valor_inicial]
+
+                # print("O VALO DE ENTRADA FOI:", valor_entrada)
+
                 self.butonFecharCaixa.setEnabled(False)
                 self.butonAbrirCaixa.setEnabled(True)
                 dataAtual = QDate.currentDate()
@@ -1931,8 +1945,11 @@ class DataEntryForm(QWidget):
             pdf.setFont("Times-Bold", 12)
 
             # DATA DO FECHAMENTO
-            pdf.drawString(10, 700 - y, str('20/03/2022'))
-            pdf.drawString(90, 700 - y, str('500'))  # VALOR DA ABERTURA
+            pdf.drawString(
+                10, 700 - y, str('{}').format(data_fechamento[dtnumber][0]))
+            # VALOR DA ABERTURA
+            pdf.drawString(
+                90, 700 - y, str({}).format(self.valor_inicial[val][0]))
 
             pdf.drawString(10, 750, "Data")
             pdf.drawString(90, 750, "Abertura")
@@ -1964,7 +1981,7 @@ class DataEntryForm(QWidget):
 
             pdf.drawString(290, 750 - y, str(self.soma_fechamento))  # TOTAL
             pdf.drawString(
-                410, 750 - y, str(self.soma_fechamento + 500))  # TOTAL
+                410, 750 - y, str(float(self.soma_fechamento )+ float(self.valor_inicial[val][0])))  # TOTAL
 
             pdf.save()
 
@@ -2710,15 +2727,24 @@ class ListPedidos(QMainWindow):
         self.close()
 
 
-class Show_pedidos(QMainWindow):
+class RelatorioDeFechamento(QWidget):
     def __init__(self):
-        super(Show_pedidos, self).__init__()
-        self.setWindowIcon(QIcon('Icones/produtos.png'))
+        super(RelatorioDeFechamento, self).__init__()
+        self.setWindowIcon(QIcon('Icones/relatorio.png'))
 
-        self.setWindowTitle("SCC - SISTEMA DE CONTROLE DE PEDIDOS")
+        self.setWindowTitle("SCC - RELATÓRIO DE FECHAMENTO DE CAIXA")
         self.setMinimumSize(800, 600)
         self.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         self.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        x = 200
+        label = QLabel(self)
+        label.setText(f'AAAAAAAAAAAAA {x}')
+        label.setFixedSize(200, 200)
+        label.setAlignment(Qt.AlignCenter)
+
+        Layout = QVBoxLayout()
+        Layout.addWidget(label)
+        self.setLayout(Layout)
 
         self.show()
 
@@ -2782,6 +2808,12 @@ class MainWindow(QMainWindow):
         btn_ac_pedido.setStatusTip("Pedidos")
         toolbar.addAction(btn_ac_pedido)
 
+        btn_ac_relatorio_fechamento = QAction(
+            QIcon("Icones/relatorio.png"), "Relatório de fechamento", self)
+        btn_ac_relatorio_fechamento.triggered.connect(self.relatorioFechamento)
+        btn_ac_relatorio_fechamento.setStatusTip("Relatório de Fechamento")
+        toolbar.addAction(btn_ac_relatorio_fechamento)
+
         btn_ac_fechar = QAction(QIcon("Icones/sair.png"), "Sair", self)
         btn_ac_fechar.triggered.connect(self.fechaTela)
         btn_ac_fechar.setStatusTip("Sair")
@@ -2807,6 +2839,11 @@ class MainWindow(QMainWindow):
             QIcon("Icones/estoque.png"), "Lista/Cadastro Estoque", self)
         btn_ac_estoque.triggered.connect(self.listEstoque)
         file_menu.addAction(btn_ac_estoque)
+
+        btn_ac_relatorio_fechamento = QAction(
+            QIcon("Icones/relatorio.png"), "Relatório de fechamento", self)
+        btn_ac_relatorio_fechamento.triggered.connect(self.relatorioFechamento)
+        file_menu.addAction(btn_ac_relatorio_fechamento)
 
         btn_ac_Cupon = QAction(
             QIcon("Icones/impressora.png"), "Imprimir Cupon", self)
@@ -2851,9 +2888,13 @@ class MainWindow(QMainWindow):
         dlg.exec()
 
     def listPedido(self):
-
         dlg = ListPedidos()
         dlg.exec()
+
+    def relatorioFechamento(self):
+        dlg = RelatorioDeFechamento()
+        dlg.exec()
+        print("relatorio de Fecahmento de caixa!!!")
 
     def listEstoque(self):
         dlg = ListEstoque()
