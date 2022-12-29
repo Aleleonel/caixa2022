@@ -1568,7 +1568,8 @@ class FechamentoCaixa(QDialog):
 
             self.status_finalizado = [
                 resultado for resultado in self.status_final]
-            # print("Mostra a ultima linha do status", self.status_finalizado)
+            print("Mostra a ultima linha do status do fechamento",
+                  self.status_finalizado)
         except:
             print("erro ao conectar")
 
@@ -1890,21 +1891,11 @@ class DataEntryForm(QWidget):
 
             if replay == QMessageBox.Yes:
 
-                self.cursor = conexao.banco.cursor()
-                consulta_sql = "SELECT valor FROM livro where status = 'I' and dataAtual = '2022-12-29';"
-                self.cursor.execute(consulta_sql)
-                self.valor_inicial = self.cursor.fetchall()
-
-                for val in range(len(self.valor_inicial)):
-                    print("TEM ALGUMA COISA AQUI", self.valor_inicial[val][0])
-
-                # valor_entrada = [val for val in valor_inicial]
-
-                # print("O VALO DE ENTRADA FOI:", valor_entrada)
+                # dataAtual = QDate.currentDate()
 
                 self.butonFecharCaixa.setEnabled(False)
                 self.butonAbrirCaixa.setEnabled(True)
-                dataAtual = QDate.currentDate()
+
                 self.soma_fechamento = 0
                 valor_do_dia = []
                 decimal_lista = []
@@ -1919,79 +1910,6 @@ class DataEntryForm(QWidget):
             print('RuntimeError', str(RuntimeError))
             print('TypeError', str(TypeError))
             print('NameError', str(NameError))
-
-        try:
-            self.cursor = conexao.banco.cursor()
-            __fechamento = "SELECT ultupdate, valor_total FROM pedidocaixa "
-            self.cursor.execute(__fechamento)
-            fechamento_diario = self.cursor.fetchall()
-
-            data_fechamento = [fecha for fecha in fechamento_diario]
-            for dtnumber in range(len(data_fechamento)):
-                if dataAtual == data_fechamento[dtnumber][0]:
-                    print("Valor itens Melecas: ",
-                          data_fechamento[dtnumber][1])
-
-                    valor_do_dia.append(data_fechamento[dtnumber][1])
-                    self.soma_fechamento += data_fechamento[dtnumber][1]
-
-            print("Data atual: ", data_fechamento[dtnumber][0])
-            print("Valor total: ", self.soma_fechamento)
-
-            y = 0
-            pdf = canvas.Canvas("fechamento_caixa.pdf")
-            pdf.setFont("Times-Bold", 18)
-            pdf.drawString(90, 800, "RELATÓRIO DE FECHAMENTO DO CAIXA:")
-            pdf.setFont("Times-Bold", 12)
-
-            # DATA DO FECHAMENTO
-            pdf.drawString(
-                10, 700 - y, str('{}').format(data_fechamento[dtnumber][0]))
-            # VALOR DA ABERTURA
-            pdf.drawString(
-                90, 700 - y, str({}).format(self.valor_inicial[val][0]))
-
-            pdf.drawString(10, 750, "Data")
-            pdf.drawString(90, 750, "Abertura")
-            pdf.drawString(160, 750, "Recebido.")
-            pdf.drawString(290, 750, "Total Recebido.")
-            pdf.drawString(410, 750, "Total.")
-            pdf.drawString(3, 750,
-                           "________________________________________________________________________________________")
-
-            total = 0
-            subtotal = 0
-            i = [i for i in valor_do_dia]
-            cont = len(i)
-            c = 0
-            while cont > 0:
-                print("Valor por itens: ", i[c])
-
-                y += 50
-                # pdf.drawString(10, 750 - y, str('20/03/2022'))  # CODIGO PRODUTO
-                # pdf.drawString(90, 750 - y, str('500'))  # DESCRIÇAO PRODUTO
-                pdf.drawString(160, 750 - y, str(i[c]))  # QUANTIDADE VENDIDA
-                # pdf.drawString(310, 750 - y, str(i))  # PREÇO UNITARIO
-                # subtotal = (valor_do_dia[i][3]) * i[c]  # QTD x PREÇO UNITARIO
-                # total += subtotal
-                # pdf.drawString(390, 750 - y, str(self.soma_fechamento))  # SUB TOTAL
-
-                cont -= 1
-                c += 1
-
-            pdf.drawString(290, 750 - y, str(self.soma_fechamento))  # TOTAL
-            pdf.drawString(
-                410, 750 - y, str(float(self.soma_fechamento )+ float(self.valor_inicial[val][0])))  # TOTAL
-
-            pdf.save()
-
-            # with open('recibo.csv', 'w') as f:
-            #     csv_writer = csv.writer(f)
-            #     rows = [i for i in valor_do_dia]
-            #     csv_writer.writerows(rows)
-
-        except Exception as e:
-            print(e)
 
     def desabilitaBotoesCaixa(self):
         self.lineEditDescription.setEnabled(False)
@@ -2639,7 +2557,7 @@ class ListPedidos(QMainWindow):
                                 ultupdate
                             FROM
                                 pedidocaixa
-                            LEFT JOIN produtos as p ON cod_produto = p.codigo 
+                            LEFT JOIN produtos as p ON cod_produto = p.codigo
                   """
 
             order = """ order by
@@ -2810,7 +2728,8 @@ class MainWindow(QMainWindow):
 
         btn_ac_relatorio_fechamento = QAction(
             QIcon("Icones/relatorio.png"), "Relatório de fechamento", self)
-        btn_ac_relatorio_fechamento.triggered.connect(self.relatorioFechamento)
+        btn_ac_relatorio_fechamento.triggered.connect(
+            self.relatorioFechamentocaixa)
         btn_ac_relatorio_fechamento.setStatusTip("Relatório de Fechamento")
         toolbar.addAction(btn_ac_relatorio_fechamento)
 
@@ -2842,7 +2761,8 @@ class MainWindow(QMainWindow):
 
         btn_ac_relatorio_fechamento = QAction(
             QIcon("Icones/relatorio.png"), "Relatório de fechamento", self)
-        btn_ac_relatorio_fechamento.triggered.connect(self.relatorioFechamento)
+        btn_ac_relatorio_fechamento.triggered.connect(
+            self.relatorioFechamentocaixa)
         file_menu.addAction(btn_ac_relatorio_fechamento)
 
         btn_ac_Cupon = QAction(
@@ -2891,10 +2811,108 @@ class MainWindow(QMainWindow):
         dlg = ListPedidos()
         dlg.exec()
 
-    def relatorioFechamento(self):
-        dlg = RelatorioDeFechamento()
-        dlg.exec()
-        print("relatorio de Fecahmento de caixa!!!")
+    def relatorioFechamentocaixa(self):
+
+        dataAtual = QDate.currentDate()
+        valor_do_dia = []
+        self.soma_fechamento = 0
+
+        self.cursor = conexao.banco.cursor()
+        consulta_sql = "SELECT valor FROM livro where status = 'I' and dataAtual = '2022-12-29';"
+        self.cursor.execute(consulta_sql)
+        self.valor_inicial = self.cursor.fetchall()
+
+        for val in range(len(self.valor_inicial)):
+            print("\nTEM ALGUMA COISA AQUI", self.valor_inicial[val][0])
+
+        # self.cursor = conexao.banco.cursor()
+        # consulta_sql = "SELECT valorfechamento FROM livro where status = 'F' and dataAtual = '2022-12-29';"
+        # self.cursor.execute(consulta_sql)
+        # self.valor_fechamento = self.cursor.fetchall()
+        # for val in range(len(self.valor_fechamento)):
+        #     print("TEM ALGUMA COISA AQUI Valor de fechamento",
+        #           self.valor_inicial[val][0])
+
+        try:
+            self.cursor = conexao.banco.cursor()
+            __fechamento = "SELECT ultupdate, valor_total FROM pedidocaixa "
+            self.cursor.execute(__fechamento)
+            fechamento_diario = self.cursor.fetchall()
+
+            data_fechamento = [fecha for fecha in fechamento_diario]
+            for dtnumber in range(len(data_fechamento)):
+                if dataAtual == data_fechamento[dtnumber][0]:
+                    print("Valor itens Melecas: ",
+                          data_fechamento[dtnumber][1])
+                    # Pega o valor de cada pedido referente a data atual
+                    # e insere na lista de valor do dia (pedidos vendido na data atual)
+                    valor_do_dia.append(data_fechamento[dtnumber][1])
+                    self.soma_fechamento += data_fechamento[dtnumber][1]
+
+            # Imprime  data do dia e a somatória de todas as venda
+            # No momento do fechamento do caixa
+            print("\nData atual: ", data_fechamento[dtnumber][0])
+            print("Valor total: ", self.soma_fechamento)
+
+            y = 0
+            pdf = canvas.Canvas("fechamento_caixa.pdf")
+            pdf.setFont("Times-Bold", 18)
+            pdf.drawString(90, 800, "RELATÓRIO DE FECHAMENTO DO CAIXA:")
+            pdf.setFont("Times-Bold", 12)
+
+            # DATA DO FECHAMENTO
+            pdf.drawString(
+                10, 700 - y, str('{}').format(data_fechamento[dtnumber][0]))
+            # VALOR DA ABERTURA
+            pdf.drawString(
+                90, 700 - y, str({}).format(self.valor_inicial[val][0]))
+
+            print("\nValor Iniciado na Abertura do caixa",
+                  self.valor_inicial[val][0])
+
+            pdf.drawString(10, 750, "Data")
+            pdf.drawString(90, 750, "Abertura")
+            pdf.drawString(160, 750, "Recebido.")
+            pdf.drawString(290, 750, "Total Recebido.")
+            pdf.drawString(410, 750, "Total.")
+            pdf.drawString(3, 750,
+                           "________________________________________________________________________________________")
+
+            total = 0
+            subtotal = 0
+            i = [i for i in valor_do_dia]
+            cont = len(i)
+            c = 0
+            while cont > 0:
+                print("Valor por itens: ", i[c])
+                total += i[c]
+                cont -= 1
+                c += 1
+
+                # y += 50
+                # pdf.drawString(10, 750 - y, str('20/03/2022'))  # CODIGO PRODUTO
+                # pdf.drawString(90, 750 - y, str('500'))  # DESCRIÇAO PRODUTO
+                # QUANTIDADE VENDIDA
+                # pdf.drawString(160, 750 - y, str(i[c]))
+                # pdf.drawString(310, 750 - y, str(i))  # PREÇO UNITARIO
+                # subtotal = (valor_do_dia[i][3]) * i[c]  # QTD x PREÇO UNITARIO
+                # total += subtotal
+                # pdf.drawString(390, 750 - y, str(self.soma_fechamento))  # SUB TOTAL
+
+            subtotal = (float(total) + float(self.valor_inicial[val][0]))
+            y += 50
+            pdf.drawString(160, 750 - y, str(total))
+            pdf.drawString(
+                290, 750 - y, str(self.soma_fechamento))  # TOTAL
+            pdf.drawString(
+                410, 750 - y, str(subtotal))  # TOTAL
+
+            pdf.save()
+
+            print("\n\nSomatoria de vendas", total)
+
+        except Exception as e:
+            print(e)
 
     def listEstoque(self):
         dlg = ListEstoque()
