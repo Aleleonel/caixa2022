@@ -2814,24 +2814,35 @@ class MainWindow(QMainWindow):
     def relatorioFechamentocaixa(self):
 
         dataAtual = QDate.currentDate()
+        data = dataAtual.toPyDate()
+
+        print("Convertendo esta data", data)
+
         valor_do_dia = []
         self.soma_fechamento = 0
+        valor_inicial = 0
 
         self.cursor = conexao.banco.cursor()
-        consulta_sql = "SELECT valor FROM livro where status = 'I' and dataAtual = '2022-12-29';"
+        consulta_sql = "SELECT valor FROM livro where status = '{}' and dataAtual = '{}';".format(
+            'I', data)
         self.cursor.execute(consulta_sql)
         self.valor_inicial = self.cursor.fetchall()
 
         for val in range(len(self.valor_inicial)):
             print("\nTEM ALGUMA COISA AQUI", self.valor_inicial[val][0])
+            valor_inicial = self.valor_inicial[val][0]
 
-        # self.cursor = conexao.banco.cursor()
-        # consulta_sql = "SELECT valorfechamento FROM livro where status = 'F' and dataAtual = '2022-12-29';"
-        # self.cursor.execute(consulta_sql)
-        # self.valor_fechamento = self.cursor.fetchall()
-        # for val in range(len(self.valor_fechamento)):
-        #     print("TEM ALGUMA COISA AQUI Valor de fechamento",
-        #           self.valor_inicial[val][0])
+        try:
+            self.cursor = conexao.banco.cursor()
+            consulta_sql_fechamento = "SELECT valorfechamento FROM livro where status = '{}' and dataAtual = '{}';".format(
+                'F', data)
+            self.cursor.execute(consulta_sql_fechamento)
+            self.valor_fechamento = self.cursor.fetchall()
+        except Exception as e:
+            print("Sem valor de fechamento", e)
+
+        for val in range(len(self.valor_fechamento)):
+            valor_fechamento = self.valor_fechamento[val][0]
 
         try:
             self.cursor = conexao.banco.cursor()
@@ -2842,18 +2853,10 @@ class MainWindow(QMainWindow):
             data_fechamento = [fecha for fecha in fechamento_diario]
             for dtnumber in range(len(data_fechamento)):
                 if dataAtual == data_fechamento[dtnumber][0]:
-                    print("Valor itens Melecas: ",
-                          data_fechamento[dtnumber][1])
                     # Pega o valor de cada pedido referente a data atual
                     # e insere na lista de valor do dia (pedidos vendido na data atual)
                     valor_do_dia.append(data_fechamento[dtnumber][1])
                     self.soma_fechamento += data_fechamento[dtnumber][1]
-
-            # Imprime  data do dia e a somatória de todas as venda
-            # No momento do fechamento do caixa
-            print("\nData atual: ", data_fechamento[dtnumber][0])
-            print("Valor total: ", self.soma_fechamento)
-
             y = 0
             pdf = canvas.Canvas("fechamento_caixa.pdf")
             pdf.setFont("Times-Bold", 18)
@@ -2865,16 +2868,14 @@ class MainWindow(QMainWindow):
                 10, 700 - y, str('{}').format(data_fechamento[dtnumber][0]))
             # VALOR DA ABERTURA
             pdf.drawString(
-                90, 700 - y, str({}).format(self.valor_inicial[val][0]))
-
-            print("\nValor Iniciado na Abertura do caixa",
-                  self.valor_inicial[val][0])
+                90, 700 - y, str({}).format(valor_inicial))
 
             pdf.drawString(10, 750, "Data")
             pdf.drawString(90, 750, "Abertura")
-            pdf.drawString(160, 750, "Recebido.")
-            pdf.drawString(290, 750, "Total Recebido.")
-            pdf.drawString(410, 750, "Total.")
+            pdf.drawString(160, 750, "Vendas")
+            pdf.drawString(220, 750, "Fechamento")
+            pdf.drawString(310, 750, "Abertura + Vendas.")
+            pdf.drawString(440, 750, "Saldo Caixa.")
             pdf.drawString(3, 750,
                            "________________________________________________________________________________________")
 
@@ -2884,32 +2885,25 @@ class MainWindow(QMainWindow):
             cont = len(i)
             c = 0
             while cont > 0:
-                print("Valor por itens: ", i[c])
                 total += i[c]
                 cont -= 1
                 c += 1
 
-                # y += 50
-                # pdf.drawString(10, 750 - y, str('20/03/2022'))  # CODIGO PRODUTO
-                # pdf.drawString(90, 750 - y, str('500'))  # DESCRIÇAO PRODUTO
-                # QUANTIDADE VENDIDA
-                # pdf.drawString(160, 750 - y, str(i[c]))
-                # pdf.drawString(310, 750 - y, str(i))  # PREÇO UNITARIO
-                # subtotal = (valor_do_dia[i][3]) * i[c]  # QTD x PREÇO UNITARIO
-                # total += subtotal
-                # pdf.drawString(390, 750 - y, str(self.soma_fechamento))  # SUB TOTAL
-
             subtotal = (float(total) + float(self.valor_inicial[val][0]))
             y += 50
             pdf.drawString(160, 750 - y, str(total))
+            pdf.drawString(220, 750 - y, str(valor_fechamento))  # TOTAL
+
+            # pdf.drawString(
+            # 290, 750 - y, str(self.soma_fechamento))  # TOTAL
+
             pdf.drawString(
-                290, 750 - y, str(self.soma_fechamento))  # TOTAL
+                310, 750 - y, str(subtotal))  # TOTAL
+
             pdf.drawString(
-                410, 750 - y, str(subtotal))  # TOTAL
+                440, 750 - y, str(subtotal - valor_fechamento))
 
             pdf.save()
-
-            print("\n\nSomatoria de vendas", total)
 
         except Exception as e:
             print(e)
