@@ -11,7 +11,6 @@ from unicodedata import decimal
 from xml.etree.ElementTree import tostring
 
 import mysql.connector
-from fpdf import FPDF
 from mysql.connector import OperationalError
 from prettytable import PLAIN_COLUMNS, PrettyTable
 from pyexpat import model
@@ -21,7 +20,6 @@ from PyQt5.QtGui import *
 from PyQt5.QtPrintSupport import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWidgets import QMessageBox
-from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
 import conexao
@@ -2758,6 +2756,28 @@ class ListPedidos(QMainWindow):
         self.close()
 
 
+class RelatorioDeFechamento(QWidget):
+    def __init__(self):
+        super(RelatorioDeFechamento, self).__init__()
+        self.setWindowIcon(QIcon("Icones/relatorio.png"))
+
+        self.setWindowTitle("SCC - RELATÓRIO DE FECHAMENTO DE CAIXA")
+        self.setMinimumSize(800, 600)
+        self.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        self.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        x = 200
+        label = QLabel(self)
+        label.setText(f"AAAAAAAAAAAAA {x}")
+        label.setFixedSize(200, 200)
+        label.setAlignment(Qt.AlignCenter)
+
+        Layout = QVBoxLayout()
+        Layout.addWidget(label)
+        self.setLayout(Layout)
+
+        self.show()
+
+
 class MainWindow(QMainWindow):
     """
     Tela principal onde eu chamo as telas de
@@ -2903,161 +2923,149 @@ class MainWindow(QMainWindow):
         dlg = ListPedidos()
         dlg.exec()
 
-    # def relatorioFechamentocaixa(self):
-    #     """Relatório de fechamento do Caixa"""
-
-    #     dataAtual = QDate.currentDate()
-    #     data = dataAtual.toPyDate()
-
-    #     valor_do_dia = []
-    #     vendas_do_dia = []
-    #     self.soma_fechamento = 0
-    #     valor_inicial = 0
-    #     valor_abertura = []
-
-    #     y = 0
-    #     pdf = canvas.Canvas("fechamento_caixa.pdf")
-    #     pdf.setFont("Times-Bold", 18)
-    #     pdf.drawString(90, 800, "RELATÓRIO DE FECHAMENTO DO CAIXA:")
-    #     pdf.setFont("Times-Bold", 12)
-
-    #     self.cursor = conexao.banco.cursor()
-    #     consulta_sql = (
-    #         "SELECT valor FROM livro where status = '{}' and dataAtual = '{}';".format(
-    #             "I", data
-    #         )
-    #     )
-    #     self.cursor.execute(consulta_sql)
-    #     self.valor_inicial = self.cursor.fetchall()
-
-    #     for val in range(len(self.valor_inicial)):
-    #         valor_inicial = float(self.valor_inicial[val][0])
-    #         valor_abertura.append(valor_inicial)
-
-    #     print("Mostra valores que iniciamos o caixa", valor_abertura)
-
-    #     try:
-    #         self.cursor = conexao.banco.cursor()
-    #         consulta_sql_fechamento = "SELECT valorfechamento FROM livro where status = '{}' and dataAtual = '{}';".format(
-    #             "F", data
-    #         )
-    #         self.cursor.execute(consulta_sql_fechamento)
-    #         self.valor_fechamento = self.cursor.fetchall()
-    #     except Exception as e:
-    #         print("Sem valor de fechamento", e)
-
-    #     valor_fechamento = 0
-    #     for val in range(len(self.valor_fechamento)):
-    #         valor_fechamento = float(self.valor_fechamento[val][0])
-
-    #     print(f"Valor de fechamento = {valor_fechamento}")
-
-    #     try:
-    #         """Pega o valor total dos pedidos ate o ultimo fechamento na data atual"""
-
-    #         self.cursor = conexao.banco.cursor()
-    #         __fechamento = "SELECT ultupdate, valor_total, nr_caixa FROM pedidocaixa"
-    #         self.cursor.execute(__fechamento)
-    #         fechamento_diario = self.cursor.fetchall()
-
-    #         self.cursor = conexao.banco.cursor()
-    #         __fechamento_nr_caixa = """ SELECT nr_caixa, SUM(valor_total) as TOTAL
-    #                             FROM controle_clientes.pedidocaixa
-    #                             group by nr_caixa
-    #                             order by nr_caixa desc
-    #                             limit 0, 2 """
-    #         self.cursor.execute(__fechamento_nr_caixa)
-    #         self.fechamento_diario_nr_caixa = self.cursor.fetchall()
-
-    #         # eu estou pegando na tabela pedidocaixa o valor do
-    #         # campo nr_caixa que é gerado a cada vez que se fecha o
-    #         # caixa para garantir que apenas os valores totais de compras
-    #         #  de cada compra seja computado a cada fechamento.
-
-    #         lista_numero_de_caixa = []
-    #         data_fechamento1 = [fecha for fecha in self.fechamento_diario_nr_caixa]
-    #         for dtnumber1 in range(len(data_fechamento1)):
-    #             self.numero_caixa = data_fechamento1[dtnumber1][0]
-    #             lista_numero_de_caixa.append(self.numero_caixa)
-
-    #         self.numero_caixa_fechamento = int(lista_numero_de_caixa[0])
-
-    #         data_fechamento = [fecha for fecha in fechamento_diario]
-    #         for dtnumber in range(len(data_fechamento)):
-    #             if dataAtual == data_fechamento[dtnumber][0]:
-    #                 # Pega o valor de cada pedido referente a data atual
-    #                 # e insere na lista de valor do dia (pedidos vendido na data atual)
-    #                 valor_do_dia.append(data_fechamento[dtnumber][1])
-    #                 self.soma_fechamento += data_fechamento[dtnumber][1]
-
-    #         # DATA DO FECHAMENTO
-    #         pdf.drawString(10, 700 - y, str("{}").format(data_fechamento[dtnumber][0]))
-
-    #         pdf.drawString(10, 750, "Data")
-    #         pdf.drawString(90, 750, "Nr.A")
-    #         pdf.drawString(160, 750, "Abertura")
-    #         pdf.drawString(220, 750, "Vendas")
-    #         pdf.drawString(310, 750, "Abertura + Vendas.")
-    #         pdf.drawString(440, 750, "Saldo Caixa.")
-    #         pdf.drawString(
-    #             3,
-    #             750,
-    #             "________________________________________________________________________________________",
-    #         )
-
-    #         total = 0
-    #         subtotal = 0
-    #         i = 0
-    #         i = [i for i in valor_do_dia]
-    #         cont = len(i)
-    #         c = 0
-    #         while cont > 0:
-    #             total += float(i[c])
-    #             cont -= 1
-    #             c += 1
-
-    #         total_abertura = 0
-    #         i_valorAbertura = [i for i in valor_abertura]
-
-    #         contador = len(i_valorAbertura)
-    #         ct = 0
-    #         while contador > 0:
-    #             caixa_iniciado = i_valorAbertura[ct]
-    #             # total_abertura += i_valorAbertura[ct]
-
-    #             pdf.drawString(
-    #                 90,
-    #                 700 - y,
-    #                 str({}).format(self.numero_caixa_fechamento),  # numero da abertura
-    #             )
-    #             pdf.drawString(
-    #                 160, 700 - y, str({}).format(caixa_iniciado)
-    #             )  # Valor da abertura
-    #             # pdf.drawString(220, 700 - y, str(total))
-    #             pdf.drawString(310, 700 - y, str(valor_fechamento))
-    #             pdf.drawString(
-    #                 440, 700 - y, str(float(valor_fechamento) - float(subtotal))
-    #             )
-    #             contador -= 1
-    #             ct += 1
-    #             y += 50
-
-    #         pdf.save()
-    #         valor_do_dia = []
-
-    #     except Exception as e:
-    #         print(e)
-
     def relatorioFechamentocaixa(self):
-        """Chama script externo"""
+        """Relatório de fechamento do Caixa"""
 
-        import subprocess
+        dataAtual = QDate.currentDate()
+        data = dataAtual.toPyDate()
 
-        # Caminho para o script externo
-        caminho_script_externo = "relatorio_fechamento2.py"
+        valor_do_dia = []
+        vendas_do_dia = []
+        self.soma_fechamento = 0
+        valor_inicial = 0
+        valor_abertura = []
 
-        # Chamar o script externo
-        subprocess.run(["python3", caminho_script_externo])
+        self.cursor = conexao.banco.cursor()
+        consulta_sql = (
+            "SELECT valor FROM livro where status = '{}' and dataAtual = '{}';".format(
+                "I", data
+            )
+        )
+        self.cursor.execute(consulta_sql)
+        self.valor_inicial = self.cursor.fetchall()
+
+        for val in range(len(self.valor_inicial)):
+            valor_inicial = float(self.valor_inicial[val][0])
+            valor_abertura.append(valor_inicial)
+
+        print("Mostra valores que iniciamos o caixa", valor_abertura)
+
+        try:
+            self.cursor = conexao.banco.cursor()
+            consulta_sql_fechamento = "SELECT valorfechamento FROM livro where status = '{}' and dataAtual = '{}';".format(
+                "F", data
+            )
+            self.cursor.execute(consulta_sql_fechamento)
+            self.valor_fechamento = self.cursor.fetchall()
+        except Exception as e:
+            print("Sem valor de fechamento", e)
+
+        valor_fechamento = 0
+        for val in range(len(self.valor_fechamento)):
+            valor_fechamento = float(self.valor_fechamento[val][0])
+
+        try:
+            self.cursor = conexao.banco.cursor()
+            __fechamento = "SELECT ultupdate, valor_total, nr_caixa FROM pedidocaixa"
+            self.cursor.execute(__fechamento)
+            fechamento_diario = self.cursor.fetchall()
+
+            self.cursor = conexao.banco.cursor()
+            __fechamento_nr_caixa = """ SELECT nr_caixa, SUM(valor_total) as TOTAL
+                                FROM controle_clientes.pedidocaixa 
+                                group by nr_caixa
+                                order by nr_caixa desc
+                                limit 0, 2 """
+            self.cursor.execute(__fechamento_nr_caixa)
+            self.fechamento_diario_nr_caixa = self.cursor.fetchall()
+
+            # eu estou pegando na tabela pedidocaixa o valor do
+            # campo nr_caixa que é gerado a cada vez que se fecha o
+            # caixa para garantir que apenas os valores totais de compras
+            #  de cada compra seja computado a cada fechamento.
+
+            lista_numero_de_caixa = []
+            data_fechamento1 = [fecha for fecha in self.fechamento_diario_nr_caixa]
+            for dtnumber1 in range(len(data_fechamento1)):
+                self.numero_caixa = data_fechamento1[dtnumber1][0]
+                lista_numero_de_caixa.append(self.numero_caixa)
+
+            print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+            print(f"{lista_numero_de_caixa[0]}")
+            self.numero_caixa_fechamento = int(lista_numero_de_caixa[0])
+            print(">>>>>>>>>>>>>>", self.numero_caixa_fechamento)
+
+            data_fechamento = [fecha for fecha in fechamento_diario]
+            for dtnumber in range(len(data_fechamento)):
+                if dataAtual == data_fechamento[dtnumber][0]:
+                    # Pega o valor de cada pedido referente a data atual
+                    # e insere na lista de valor do dia (pedidos vendido na data atual)
+                    valor_do_dia.append(data_fechamento[dtnumber][1])
+                    self.soma_fechamento += data_fechamento[dtnumber][1]
+            y = 0
+            pdf = canvas.Canvas("fechamento_caixa.pdf")
+            pdf.setFont("Times-Bold", 18)
+            pdf.drawString(90, 800, "RELATÓRIO DE FECHAMENTO DO CAIXA:")
+            pdf.setFont("Times-Bold", 12)
+
+            # DATA DO FECHAMENTO
+            pdf.drawString(10, 700 - y, str("{}").format(data_fechamento[dtnumber][0]))
+
+            # VALOR DA ABERTURA
+
+            # pdf.drawString(90, 700 - y, str({}).format(valor_inicial))
+
+            pdf.drawString(10, 750, "Data")
+            pdf.drawString(90, 750, "Nr.Abertura")
+            pdf.drawString(160, 750, "Abertura")
+            pdf.drawString(220, 750, "Vendas")
+            pdf.drawString(310, 750, "Abertura + Vendas.")
+            pdf.drawString(440, 750, "Saldo Caixa.")
+            pdf.drawString(
+                3,
+                750,
+                "________________________________________________________________________________________",
+            )
+
+            total = 0
+            subtotal = 0
+            i = 0
+            i = [i for i in valor_do_dia]
+            cont = len(i)
+            c = 0
+            while cont > 0:
+                total += float(i[c])
+                cont -= 1
+                c += 1
+
+            total_abertura = 0
+            i_valorAbertura = [i for i in valor_abertura]
+
+            contador = len(i_valorAbertura)
+            ct = 0
+            while contador > 0:
+                caixa_iniciado = i_valorAbertura[ct]
+                total_abertura += i_valorAbertura[ct]
+
+                pdf.drawString(
+                    90, 700 - y, str({}).format(self.numero_caixa_fechamento)
+                )
+                pdf.drawString(160, 700 - y, str({}).format(caixa_iniciado))
+                pdf.drawString(220, 700 - y, str(total))
+                pdf.drawString(310, 700 - y, str(valor_fechamento))
+                # pdf.drawString(440, 700 - y, str(self.numero_caixa_fechamento))
+                pdf.drawString(
+                    440, 700 - y, str(float(valor_fechamento) - float(subtotal))
+                )
+                contador -= 1
+                ct += 1
+                y += 50
+
+            pdf.save()
+            valor_do_dia = []
+
+        except Exception as e:
+            print(e)
 
     def listEstoque(self):
         dlg = ListEstoque()
@@ -3154,93 +3162,6 @@ def telaprincipal():
     w = DataEntryForm()
     dlg = MainWindow(w)
     dlg.exec_()
-
-
-# class RelatorioDeFechamento(QMainWindow):
-#     def __init__(self):
-#         super(RelatorioDeFechamento, self).__init__()
-
-#         self.init_ui()
-
-#     def init_ui(self):
-#         self.setWindowTitle("Relatório de Fechamento de Caixa")
-#         self.setMinimumSize(800, 600)
-#         self.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-#         self.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-
-#         layout = QVBoxLayout()
-
-#         self.start_date_edit = QDateEdit(self)
-#         self.start_date_edit.setCalendarPopup(True)
-#         self.start_date_edit.setDate(QDate.currentDate().addDays(-7))
-#         layout.addWidget(QLabel("Data Inicial:"))
-#         layout.addWidget(self.start_date_edit)
-
-#         self.end_date_edit = QDateEdit(self)
-#         self.end_date_edit.setCalendarPopup(True)
-#         self.end_date_edit.setDate(QDate.currentDate())
-
-#         self.generate_button = QPushButton("Gerar Relatório")
-#         self.generate_button.clicked.connect(self.generate_report)
-
-#         layout.addWidget(QLabel("Data Inicial:"))
-#         layout.addWidget(self.start_date_edit)
-#         layout.addWidget(QLabel("Data Final:"))
-#         layout.addWidget(self.end_date_edit)
-#         layout.addWidget(self.generate_button)
-
-#         self.setLayout(layout)
-
-#         self.show()
-
-#     def generate_report(self):
-#         start_date = self.start_date_edit.date().toString(Qt.ISODate)
-#         end_date = self.end_date_edit.date().toString(Qt.ISODate)
-
-#         query = f"""
-#             SELECT idlivro, dataAtual, valor, valorfechamento, total, status
-#             FROM livro
-#             WHERE dataAtual BETWEEN '{start_date}' AND '{end_date}' AND status = 'F'
-#         """
-
-#         cursor = conexao.banco.cursor(dictionary=True)
-#         cursor.execute(query)
-#         results = cursor.fetchall()
-#         cursor.close()
-
-#         pdf = FPDF()
-#         pdf.add_page()
-#         pdf.set_font("Arial", size=12)
-#         pdf.cell(
-#             200,
-#             10,
-#             f"Relatório de Fechamento de Caixa de {start_date} a {end_date}",
-#             ln=True,
-#             align="C",
-#         )
-
-#         for row in results:
-#             pdf.cell(40, 10, f"ID Livro: {row['idlivro']}", ln=True)
-#             pdf.cell(40, 10, f"Data: {row['dataAtual']}", ln=True)
-#             pdf.cell(40, 10, f"Valor Abertura: R${row['valor']:.2f}", ln=True)
-#             pdf.cell(
-#                 40, 10, f"Valor Fechamento: R${row['valorfechamento']:.2f}", ln=True
-#             )
-#             pdf.cell(
-#                 40,
-#                 10,
-#                 f"Total do Fechamento: R${row['total']:.2f}",
-#                 ln=True,
-#             )
-#             pdf.cell(40, 10, f"Status: {row['status']}", ln=True)
-#             pdf.ln()
-
-#         save_path, _ = QFileDialog.getSaveFileName(
-#             self, "Salvar PDF", "", "PDF Files (*.pdf)"
-#         )
-
-#         if save_path:
-#             pdf.output(save_path)
 
 
 class LoginForm(QDialog):
