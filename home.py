@@ -1,8 +1,10 @@
 import csv
+import locale
 import os
 import sys
 import time
 from datetime import date, datetime
+from decimal import Decimal
 from email import message
 from logging import warning
 from operator import is_not
@@ -1501,10 +1503,47 @@ class DeleteCliente(QDialog):
             )
 
 
+# class DecimalLineEdit(QLineEdit):
+#     def __init__(self):
+#         super().__init__()
+
+#     def eventFilter(self, obj, event):
+#         if event.type() == event.KeyPress:
+#             if event.key() == 44:  # Código da tecla vírgula
+#                 event = event.replace(44, 46)  # Substituir vírgula por ponto
+
+#         return super().eventFilter(obj, event)
+
+
+class DecimalLineEdit(QLineEdit):
+    """Classe que define um QlineEdit como numérico"""
+
+    def __init__(self):
+        super().__init__()
+
+    def eventFilter(self, obj, event):
+        if event.type() == event.KeyPress:
+            if event.key() == Qt.Key_Comma or event.key() == Qt.Key_Period:
+                # Substituir vírgula por ponto
+                self.insert("0.")
+                return True
+            elif event.text().isdigit() or (
+                event.text() == "-" and self.cursorPosition() == 0
+            ):
+                # Apenas números ou sinal negativo no início são permitidos
+                return super().eventFilter(obj, event)
+            else:
+                return True  # Ignorar outros caracteres
+
+        return super().eventFilter(obj, event)
+
+
 class AberturaCaixa(QDialog):
     """
     Define uma nova janela onde inserimos os valores de abertura do caixa do dia
     """
+
+    # Remover o botão fechar
 
     def __init__(self, *args, **kwargs):
         super(AberturaCaixa, self).__init__(*args, **kwargs)
@@ -1529,11 +1568,13 @@ class AberturaCaixa(QDialog):
         self.dataabertura.setEnabled(False)
         layout.addWidget(self.dataabertura)
 
-        self.caixainicio = QLineEdit()
+        self.caixainicio = DecimalLineEdit()
         self.onlyFloat = QDoubleValidator()
+        self.onlyFloat.setNotation(QDoubleValidator.StandardNotation)
         self.caixainicio.setValidator(self.onlyFloat)
         self.caixainicio.setPlaceholderText("R$ Valor inicial")
         layout.addWidget(self.caixainicio)
+        self.caixainicio.textChanged[str].connect(self.check_disable)
 
         self.buttonAdd = QPushButton("Add.", self)
         self.buttonAdd.setIcon(QIcon("Icones/add.png"))
@@ -1544,7 +1585,13 @@ class AberturaCaixa(QDialog):
         layout.addWidget(self.buttonAdd)
         self.setLayout(layout)
 
-        self.caixainicio.textChanged[str].connect(self.check_disable)
+        # self.caixainicio.textChanged[str].connect(self.check_disable)
+
+        self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            event.ignore()  # Ignorar a tecla ESC para evitar fechar o diálogo
 
     def check_disable(self):
         """Habilita o botão adicionar valor livro caixa apenas se tiver valor no text"""
@@ -1563,7 +1610,13 @@ class AberturaCaixa(QDialog):
         self.valorfechamento = 0
         self.total = 0
 
-        self.valorcaixainiado += float(self.caixainicio.text())
+        # Defina o local para o Brasil
+        locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
+
+        if self.caixainicio.text() == ",":
+            self.caixainicio.setText("0,00")
+
+        self.valorcaixainiado += float(self.caixainicio.text().replace(",", "."))
         self.total += self.valorcaixainiado + self.valorfechamento
 
         self.cursor = conexao.banco.cursor()
@@ -1610,7 +1663,7 @@ class FechamentoCaixa(QDialog):
         self.datafechamento.setEnabled(False)
         layout.addWidget(self.datafechamento)
 
-        self.caixafechamento = QLineEdit()
+        self.caixafechamento = DecimalLineEdit()
         self.onlyFloat = QDoubleValidator()
         self.caixafechamento.setValidator(self.onlyFloat)
         self.caixafechamento.setPlaceholderText("R$ Valor fechamento")
@@ -1625,7 +1678,14 @@ class FechamentoCaixa(QDialog):
         layout.addWidget(self.buttonAdd)
         self.setLayout(layout)
 
+        # remove o botão fechar do Qdialog
+        self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
+
         self.caixafechamento.textChanged[str].connect(self.check_disable)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            event.ignore()  # Ignorar a tecla ESC para evitar fechar o diálogo
 
     def check_disable(self):
         """Habilita o botão adicionar valor livro caixa apenas se tiver valor no text"""
@@ -1661,7 +1721,10 @@ class FechamentoCaixa(QDialog):
         self.valorfechamento = 0
         self.total = 0
 
-        self.valorfechamento += float(self.caixafechamento.text())
+        if self.caixafechamento.text() == ",":
+            self.caixafechamento.setText("0,00")
+
+        self.valorfechamento += float(self.caixafechamento.text().replace(",", "."))
 
         # varrer a tabela livro para pegar o valorcaixainiciado
         self.cursor = conexao.banco.cursor()
@@ -1674,15 +1737,6 @@ class FechamentoCaixa(QDialog):
         self.fecha_indice = [resultado for resultado in self.result]
 
         for indice in range(len(self.fecha_indice)):
-            print("Mostar Result Fechamento_Caixa 0: ", self.fecha_indice[indice][0])
-            # print('Mostar Result Fechamento_Caixa 1: ', self.fecha_indice[indice][1])
-            print(
-                "Mostar Result Fechamento_Caixa 2: ", self.fecha_indice[indice][2]
-            )  # valor da abertura indice[2]
-            # print('Mostar Result Fechamento_Caixa 3: ', self.fecha_indice[indice][3])
-            # print('Mostar Result Fechamento_Caixa 4: ', self.fecha_indice[indice][4])
-            print("********************************************")
-
             # precisa pegar da tabela, esse valor ja exite na tabela
             self.valorcaixainiado = self.fecha_indice[indice][2]
 
@@ -2791,9 +2845,17 @@ class MainWindow(QMainWindow):
         statusbar = QStatusBar()
         self.setStatusBar(statusbar)
 
+        # Adicionar rótulo de relógio à barra de status
+        self.clock_label = QLabel(self.statusBar())
+        self.statusBar().addPermanentWidget(self.clock_label)
+        self.update_time()
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_time)
+        self.timer.start(1000)
+
         # botões do menu
         btn_ac_adduser = QAction(
-            QIcon("Icones/clientes.png"), "Listar/Cadastrar de Cliente", self
+            QIcon("Icones/clientes.png"), "Listar/Cadastrar Cliente", self
         )
         btn_ac_adduser.triggered.connect(self.listClientes)
         btn_ac_adduser.setStatusTip("Clientes")
@@ -2881,6 +2943,13 @@ class MainWindow(QMainWindow):
         # self.show()
         self.showFullScreen()
 
+    # ... (restante do seu código)
+
+    def update_time(self):
+        current_time = QTime.currentTime()
+        time_text = current_time.toString("hh:mm:ss")
+        self.clock_label.setText("Hora: " + time_text)
+
     def about(self):
         dlg = AboutDialog()
         dlg.exec()
@@ -2903,151 +2972,6 @@ class MainWindow(QMainWindow):
         dlg = ListPedidos()
         dlg.exec()
 
-    # def relatorioFechamentocaixa(self):
-    #     """Relatório de fechamento do Caixa"""
-
-    #     dataAtual = QDate.currentDate()
-    #     data = dataAtual.toPyDate()
-
-    #     valor_do_dia = []
-    #     vendas_do_dia = []
-    #     self.soma_fechamento = 0
-    #     valor_inicial = 0
-    #     valor_abertura = []
-
-    #     y = 0
-    #     pdf = canvas.Canvas("fechamento_caixa.pdf")
-    #     pdf.setFont("Times-Bold", 18)
-    #     pdf.drawString(90, 800, "RELATÓRIO DE FECHAMENTO DO CAIXA:")
-    #     pdf.setFont("Times-Bold", 12)
-
-    #     self.cursor = conexao.banco.cursor()
-    #     consulta_sql = (
-    #         "SELECT valor FROM livro where status = '{}' and dataAtual = '{}';".format(
-    #             "I", data
-    #         )
-    #     )
-    #     self.cursor.execute(consulta_sql)
-    #     self.valor_inicial = self.cursor.fetchall()
-
-    #     for val in range(len(self.valor_inicial)):
-    #         valor_inicial = float(self.valor_inicial[val][0])
-    #         valor_abertura.append(valor_inicial)
-
-    #     print("Mostra valores que iniciamos o caixa", valor_abertura)
-
-    #     try:
-    #         self.cursor = conexao.banco.cursor()
-    #         consulta_sql_fechamento = "SELECT valorfechamento FROM livro where status = '{}' and dataAtual = '{}';".format(
-    #             "F", data
-    #         )
-    #         self.cursor.execute(consulta_sql_fechamento)
-    #         self.valor_fechamento = self.cursor.fetchall()
-    #     except Exception as e:
-    #         print("Sem valor de fechamento", e)
-
-    #     valor_fechamento = 0
-    #     for val in range(len(self.valor_fechamento)):
-    #         valor_fechamento = float(self.valor_fechamento[val][0])
-
-    #     print(f"Valor de fechamento = {valor_fechamento}")
-
-    #     try:
-    #         """Pega o valor total dos pedidos ate o ultimo fechamento na data atual"""
-
-    #         self.cursor = conexao.banco.cursor()
-    #         __fechamento = "SELECT ultupdate, valor_total, nr_caixa FROM pedidocaixa"
-    #         self.cursor.execute(__fechamento)
-    #         fechamento_diario = self.cursor.fetchall()
-
-    #         self.cursor = conexao.banco.cursor()
-    #         __fechamento_nr_caixa = """ SELECT nr_caixa, SUM(valor_total) as TOTAL
-    #                             FROM controle_clientes.pedidocaixa
-    #                             group by nr_caixa
-    #                             order by nr_caixa desc
-    #                             limit 0, 2 """
-    #         self.cursor.execute(__fechamento_nr_caixa)
-    #         self.fechamento_diario_nr_caixa = self.cursor.fetchall()
-
-    #         # eu estou pegando na tabela pedidocaixa o valor do
-    #         # campo nr_caixa que é gerado a cada vez que se fecha o
-    #         # caixa para garantir que apenas os valores totais de compras
-    #         #  de cada compra seja computado a cada fechamento.
-
-    #         lista_numero_de_caixa = []
-    #         data_fechamento1 = [fecha for fecha in self.fechamento_diario_nr_caixa]
-    #         for dtnumber1 in range(len(data_fechamento1)):
-    #             self.numero_caixa = data_fechamento1[dtnumber1][0]
-    #             lista_numero_de_caixa.append(self.numero_caixa)
-
-    #         self.numero_caixa_fechamento = int(lista_numero_de_caixa[0])
-
-    #         data_fechamento = [fecha for fecha in fechamento_diario]
-    #         for dtnumber in range(len(data_fechamento)):
-    #             if dataAtual == data_fechamento[dtnumber][0]:
-    #                 # Pega o valor de cada pedido referente a data atual
-    #                 # e insere na lista de valor do dia (pedidos vendido na data atual)
-    #                 valor_do_dia.append(data_fechamento[dtnumber][1])
-    #                 self.soma_fechamento += data_fechamento[dtnumber][1]
-
-    #         # DATA DO FECHAMENTO
-    #         pdf.drawString(10, 700 - y, str("{}").format(data_fechamento[dtnumber][0]))
-
-    #         pdf.drawString(10, 750, "Data")
-    #         pdf.drawString(90, 750, "Nr.A")
-    #         pdf.drawString(160, 750, "Abertura")
-    #         pdf.drawString(220, 750, "Vendas")
-    #         pdf.drawString(310, 750, "Abertura + Vendas.")
-    #         pdf.drawString(440, 750, "Saldo Caixa.")
-    #         pdf.drawString(
-    #             3,
-    #             750,
-    #             "________________________________________________________________________________________",
-    #         )
-
-    #         total = 0
-    #         subtotal = 0
-    #         i = 0
-    #         i = [i for i in valor_do_dia]
-    #         cont = len(i)
-    #         c = 0
-    #         while cont > 0:
-    #             total += float(i[c])
-    #             cont -= 1
-    #             c += 1
-
-    #         total_abertura = 0
-    #         i_valorAbertura = [i for i in valor_abertura]
-
-    #         contador = len(i_valorAbertura)
-    #         ct = 0
-    #         while contador > 0:
-    #             caixa_iniciado = i_valorAbertura[ct]
-    #             # total_abertura += i_valorAbertura[ct]
-
-    #             pdf.drawString(
-    #                 90,
-    #                 700 - y,
-    #                 str({}).format(self.numero_caixa_fechamento),  # numero da abertura
-    #             )
-    #             pdf.drawString(
-    #                 160, 700 - y, str({}).format(caixa_iniciado)
-    #             )  # Valor da abertura
-    #             # pdf.drawString(220, 700 - y, str(total))
-    #             pdf.drawString(310, 700 - y, str(valor_fechamento))
-    #             pdf.drawString(
-    #                 440, 700 - y, str(float(valor_fechamento) - float(subtotal))
-    #             )
-    #             contador -= 1
-    #             ct += 1
-    #             y += 50
-
-    #         pdf.save()
-    #         valor_do_dia = []
-
-    #     except Exception as e:
-    #         print(e)
-
     def relatorioFechamentocaixa(self):
         """Chama script externo"""
 
@@ -3068,23 +2992,6 @@ class MainWindow(QMainWindow):
         dlg.exec_()
 
     def cupom_pdf(self):
-        """
-        precisa ser implementado ainda
-        :return:
-        """
-        # for i in range(self.table.rowCount()):
-        #     cod = self.table.item(i, 0).text()
-        #     text = self.table.item(i, 1).text()
-        #     qtd = float(self.table.item(i, 2).text())
-        #     valUn = float(self.table.item(i, 3).text().replace('R$', ''))
-        #     valTot = float(self.table.item(i, 4).text().replace('R$', ''))
-        #
-        #     print(cod)
-        #     print(text)
-        #     print(qtd)
-        #     print(valUn)
-        #     print(valTot)
-
         cursor = conexao.banco.cursor()
         comando_SQL = "SELECT * FROM produtos"
         cursor.execute(comando_SQL)
@@ -3154,93 +3061,6 @@ def telaprincipal():
     w = DataEntryForm()
     dlg = MainWindow(w)
     dlg.exec_()
-
-
-# class RelatorioDeFechamento(QMainWindow):
-#     def __init__(self):
-#         super(RelatorioDeFechamento, self).__init__()
-
-#         self.init_ui()
-
-#     def init_ui(self):
-#         self.setWindowTitle("Relatório de Fechamento de Caixa")
-#         self.setMinimumSize(800, 600)
-#         self.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-#         self.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-
-#         layout = QVBoxLayout()
-
-#         self.start_date_edit = QDateEdit(self)
-#         self.start_date_edit.setCalendarPopup(True)
-#         self.start_date_edit.setDate(QDate.currentDate().addDays(-7))
-#         layout.addWidget(QLabel("Data Inicial:"))
-#         layout.addWidget(self.start_date_edit)
-
-#         self.end_date_edit = QDateEdit(self)
-#         self.end_date_edit.setCalendarPopup(True)
-#         self.end_date_edit.setDate(QDate.currentDate())
-
-#         self.generate_button = QPushButton("Gerar Relatório")
-#         self.generate_button.clicked.connect(self.generate_report)
-
-#         layout.addWidget(QLabel("Data Inicial:"))
-#         layout.addWidget(self.start_date_edit)
-#         layout.addWidget(QLabel("Data Final:"))
-#         layout.addWidget(self.end_date_edit)
-#         layout.addWidget(self.generate_button)
-
-#         self.setLayout(layout)
-
-#         self.show()
-
-#     def generate_report(self):
-#         start_date = self.start_date_edit.date().toString(Qt.ISODate)
-#         end_date = self.end_date_edit.date().toString(Qt.ISODate)
-
-#         query = f"""
-#             SELECT idlivro, dataAtual, valor, valorfechamento, total, status
-#             FROM livro
-#             WHERE dataAtual BETWEEN '{start_date}' AND '{end_date}' AND status = 'F'
-#         """
-
-#         cursor = conexao.banco.cursor(dictionary=True)
-#         cursor.execute(query)
-#         results = cursor.fetchall()
-#         cursor.close()
-
-#         pdf = FPDF()
-#         pdf.add_page()
-#         pdf.set_font("Arial", size=12)
-#         pdf.cell(
-#             200,
-#             10,
-#             f"Relatório de Fechamento de Caixa de {start_date} a {end_date}",
-#             ln=True,
-#             align="C",
-#         )
-
-#         for row in results:
-#             pdf.cell(40, 10, f"ID Livro: {row['idlivro']}", ln=True)
-#             pdf.cell(40, 10, f"Data: {row['dataAtual']}", ln=True)
-#             pdf.cell(40, 10, f"Valor Abertura: R${row['valor']:.2f}", ln=True)
-#             pdf.cell(
-#                 40, 10, f"Valor Fechamento: R${row['valorfechamento']:.2f}", ln=True
-#             )
-#             pdf.cell(
-#                 40,
-#                 10,
-#                 f"Total do Fechamento: R${row['total']:.2f}",
-#                 ln=True,
-#             )
-#             pdf.cell(40, 10, f"Status: {row['status']}", ln=True)
-#             pdf.ln()
-
-#         save_path, _ = QFileDialog.getSaveFileName(
-#             self, "Salvar PDF", "", "PDF Files (*.pdf)"
-#         )
-
-#         if save_path:
-#             pdf.output(save_path)
 
 
 class LoginForm(QDialog):
