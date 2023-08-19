@@ -2978,7 +2978,7 @@ class MainWindow(QMainWindow):
         import subprocess
 
         # Caminho para o script externo
-        caminho_script_externo = "relatorio_fechamento2.py"
+        caminho_script_externo = "relatorio_fechamento3.py"
 
         # Chamar o script externo
         subprocess.run(["python3", caminho_script_externo])
