@@ -31,6 +31,99 @@ import conexao
 global loginok
 
 
+class ConsultaProdutosEstoque:
+    def __init__(self):
+        self.cursor = conexao.banco.cursor()
+
+    def consultar_produtos(self):
+        """Consulta produtos na hora da venda, tras apenas itens com saldo em estoque"""
+        consulta_prod = """SELECT p.codigo, p.descricao, p.preco, p.ncm, p.un FROM produtos as p
+                            inner join controle_clientes.estoque as e
+                            where e.status = '{}'
+                            and e.estoque > '{}'
+                            and e.idproduto = p.codigo group by p.codigo""".format(
+            "E", 0
+        )
+
+        self.cursor.execute(consulta_prod)
+        result_prod = self.cursor.fetchall()
+        self.cursor.close()
+
+        # Criação da lista de produtos
+        produtos = [item[1] for item in result_prod if item[1]]
+
+        return produtos
+
+    def consultar_produtos_geral(self):
+        """Consulta produtos na hora da venda, traz apenas um item com saldo em estoque por código de produto"""
+        consulta_prod = """SELECT p.codigo, MAX(p.descricao) as descricao, p.preco, 
+                    MAX(e.preco_compra) as preco_compra, p.ncm, p.un 
+                    FROM produtos as p
+                    LEFT JOIN controle_clientes.estoque as e
+                    ON p.codigo = e.idproduto
+                    GROUP BY p.codigo, p.preco, p.ncm, p.un"""
+
+        self.cursor.execute(consulta_prod)
+        result_prod = self.cursor.fetchall()
+        self.cursor.close()
+
+        # Criação da lista de produtos
+        produtos_geral = [item[1] for item in result_prod if item[1]]
+
+        return produtos_geral
+
+    def consultaProdutosLista(self, consulta):
+        """Consulta todos os itens cadastrados pela descrição para uma simples consulta"""
+        try:
+            self.cursor = conexao.banco.cursor()
+
+            sql = """SELECT p.codigo, p.descricao, MAX(p.preco) as preco, MAX(p.ncm) as ncm, MAX(p.un) as un, MAX(e.preco_compra) as preco_compra
+                    FROM produtos as p
+                    INNER JOIN controle_clientes.estoque as e
+                    ON p.codigo = e.idproduto
+                    """
+
+            where = f" WHERE descricao = '{consulta}' GROUP BY p.codigo"  # AND est.idproduto = codigo
+            comando_sql = sql + where
+            self.cursor.execute(comando_sql)
+            result = self.cursor.fetchall()
+            self.cursor.close()
+
+            if not result:
+                raise Exception(
+                    "Produto não cadastrado ou sem movimentação em estoque!"
+                )
+
+            return result
+
+        except Exception as e:
+            raise e  # Lança a exceção para ser tratada na classe filha
+
+    def consultaCodigoslista(self, consultacodigo):
+        """Consulta todos os itens cadastrados pelo código para uma simples consulta"""
+        try:
+            self.cursor = conexao.banco.cursor()
+            sql = "SELECT codigo, descricao, ncm, un, preco, est.preco_compra \
+                   FROM produtos \
+                   inner join controle_clientes.estoque as est"
+
+            where = f" WHERE codigo = '{consultacodigo}' "  # AND est.idproduto = codigo
+            comando_sql = sql + where
+            self.cursor.execute(comando_sql)
+            result = self.cursor.fetchall()
+            self.cursor.close()
+
+            if not result:
+                raise Exception(
+                    "Produto não cadastrado ou sem movimentação em estoque!"
+                )
+
+            return result
+
+        except Exception as e:
+            raise e  # Lança a exceção para ser tratada na classe filha
+
+
 class AboutDialog(QDialog):
     """
     Define uma nova janela onde mostra as informações
@@ -450,6 +543,371 @@ class SearchEstoque(QDialog):
         except Exception:
             QMessageBox.warning(
                 QMessageBox(), "aleleonel@gmail.com", "A pesquisa falhou!"
+            )
+
+
+class SearchClientes(QDialog):
+    def __init__(self, *args, **kwargs):
+        super(SearchClientes, self).__init__(*args, **kwargs)
+
+        self.setGeometry(
+            100, 100, 800, 600
+        )  # Define a posição e tamanho inicial da janela
+
+        disableWidgetsCheckBox = QCheckBox("&Disable widgets")
+
+        self.createTopLeftGroupBox()
+        self.createGroupBoxSalvar()
+        self.createGroupBox()
+        self.createEndercoGroupBox()
+        self.buscaregistros()
+
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox1.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox2.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox3.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox4.setDisabled)
+
+        topLayout = QHBoxLayout()
+        topLayout.addStretch(1)
+        topLayout.addWidget(disableWidgetsCheckBox)
+
+        mainLayout = QGridLayout()
+        mainLayout.addLayout(topLayout, 0, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox1, 1, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox2, 2, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox3, 4, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox4, 3, 0, 1, 2)
+        mainLayout.setRowStretch(1, 1)
+        mainLayout.setRowStretch(2, 1)
+        mainLayout.setColumnStretch(0, 1)
+        mainLayout.setColumnStretch(1, 1)
+        self.setLayout(mainLayout)
+
+        self.setWindowTitle("BUSCA POR CLIENTES")
+
+    def createGroupBox(self):
+        self.GroupBox2 = QGroupBox()
+
+        layout = QVBoxLayout()
+
+        # Crie um QFormLayout para os pares de rótulos e QLineEdit
+        form_layout = QFormLayout()
+
+        self.cpfinput = QLineEdit()
+        self.cpfinput.setPlaceholderText("Nome / Razão: ")
+        form_layout.addRow("Nome / Razão: ", self.cpfinput)
+
+        self.rginput = QLineEdit()
+        self.rginput.setPlaceholderText("R.G")
+        form_layout.addRow("RG:", self.rginput)
+
+        self.mobileinput = QLineEdit()
+        self.mobileinput.setPlaceholderText("Telefone NO.")
+        form_layout.addRow("Telefone NO.:", self.mobileinput)
+
+        # Adicione o QFormLayout ao layout vertical
+        layout.addLayout(form_layout)
+
+        layout.addStretch(1)
+        self.GroupBox2.setLayout(layout)
+
+    def createTopLeftGroupBox(self):
+        self.GroupBox1 = QGroupBox("Clientes")
+
+        layout = QVBoxLayout()
+
+        # Crie um QFormLayout para os pares de rótulos e QLineEdit
+
+        self.nameinput = QLineEdit()
+        self.nameinput.setMaxLength(30)  # Define o comprimento máximo
+        self.nameinput.setMinimumWidth(200)
+        self.nameinput.setPlaceholderText("Tipo")
+        layout.addWidget(self.nameinput)
+
+        layout.addLayout(layout)
+
+        layout.addStretch(1)
+        self.GroupBox1.setLayout(layout)
+
+    def createEndercoGroupBox(self):
+        self.GroupBox4 = QGroupBox()
+        layout = QVBoxLayout()
+
+        # Crie um QFormLayout para os pares de rótulos e QLineEdit
+        form_layout = QFormLayout()
+
+        self.addressinput = QLineEdit()
+        self.addressinput.setPlaceholderText("Logradouro")
+        form_layout.addRow("Logradouro:", self.addressinput)
+
+        self.bairro = QLineEdit()
+        self.bairro.setPlaceholderText("Bairro")
+        form_layout.addRow("Bairro:", self.bairro)
+
+        self.addresscomplemento = QLineEdit()
+        self.addresscomplemento.setPlaceholderText("Complemento")
+        form_layout.addRow("Complemento:", self.addresscomplemento)
+
+        self.addresscidade = QLineEdit()
+        self.addresscidade.setPlaceholderText("Cidade")
+        form_layout.addRow("Cidade:", self.addresscidade)
+
+        self.cep = QLineEdit()
+        self.cep.setPlaceholderText("CEP")
+        form_layout.addRow("CEP.:", self.cep)
+
+        self.ederecoNumero = QLineEdit()
+        self.ederecoNumero.setPlaceholderText("Nr.")
+        form_layout.addRow("Nr.:", self.ederecoNumero)
+
+        layout.addLayout(form_layout)
+
+        layout.addStretch(1)
+        self.GroupBox4.setLayout(layout)
+
+    def createGroupBoxSalvar(self):
+        self.GroupBox3 = QGroupBox("Registro")
+
+        # Adicione botões para avançar e voltar
+        self.nextButton = QPushButton("Próximo")
+        self.prevButton = QPushButton("Anterior")
+
+        self.nextButton.clicked.connect(self.avancarRegistro)
+        self.prevButton.clicked.connect(self.voltarRegistro)
+
+        self.editButton = QPushButton("Editar")
+        self.editButton.clicked.connect(self.editarRegistro)
+
+        self.defaultPushButton2 = QPushButton(self)
+        self.defaultPushButton2.setDefault(True)
+        self.defaultPushButton2.setIcon(QIcon("Icones/sair.png"))
+        self.defaultPushButton2.setIconSize(QSize(20, 20))
+        self.defaultPushButton2.setMinimumHeight(25)
+        self.defaultPushButton2.clicked.connect(self.closeCadastro)
+
+        layout = QGridLayout()
+
+        # Modifique a disposição dos botões
+        layout.addWidget(self.editButton, 1, 0)
+        layout.addWidget(self.prevButton, 2, 0)
+        layout.addWidget(self.nextButton, 2, 1)
+        layout.addWidget(self.defaultPushButton2, 3, 0, 1, 2)
+        layout.setRowStretch(5, 1)
+        self.GroupBox3.setLayout(layout)
+
+        # Inicialize uma variável para rastrear o índice do registro atual
+        self.current_record_index = 0
+        self.records = []
+
+    def buscaregistros(self):
+        try:
+            self.cursor = conexao.banco.cursor()
+            comando_sql = "SELECT * FROM clientes"
+
+            self.cursor.execute(comando_sql)
+            result = self.cursor.fetchall()
+            self.cursor.close()
+
+            # Armazene os registros e defina o índice atual para 0
+            self.records = [item for item in result if item]
+            self.current_record_index = 0
+
+            # Atualize os campos com base no registro atual
+            self.atualizarCampos()
+
+        except Exception as e:
+            QMessageBox.warning(
+                QMessageBox(), "Erro", f"A busca de registros falhou: {str(e)}"
+            )
+
+    def avancarRegistro(self):
+        # Avançar para o próximo registro
+        if self.current_record_index < len(self.records) - 1:
+            self.current_record_index += 1
+            self.atualizarCampos()
+
+    def voltarRegistro(self):
+        # Voltar para o registro anterior
+        if self.current_record_index > 0:
+            self.current_record_index -= 1
+            self.atualizarCampos()
+
+    def atualizarCampos(self):
+        if 0 <= self.current_record_index < len(self.records):
+            # Atualizar os campos com base no registro atual
+            record = self.records[self.current_record_index]
+
+            self.nameinput.setText(record[1])
+            self.cpfinput.setText(record[2])
+            self.rginput.setText(record[3])
+
+            self.mobileinput.setText(record[5])
+            self.addressinput.setText(record[6])
+            self.bairro.setText(record[8])
+
+            self.addresscomplemento.setText(record[7])
+            self.ederecoNumero.setText(record[9])
+            self.cep.setText(record[10])
+            self.addresscidade.setText(record[11])
+
+    def editarRegistro(self):
+        if self.current_record_index < len(self.records):
+            # Obtenha o registro atual
+            record = self.records[self.current_record_index]
+
+            # Abra uma janela de edição de registro ou um diálogo de edição aqui
+            # Passe os dados do registro para a janela de edição
+
+            # Por exemplo, você pode criar uma nova janela de edição:
+            editDialog = EditDialog(record)
+
+            # Conecte um sinal para atualizar os dados após a edição ser concluída
+            editDialog.edicaoConcluida.connect(self.atualizarRegistroEditado)
+
+            # Exiba a janela de edição
+            editDialog.exec_()
+
+    def atualizarRegistroEditado(self):
+        # Atualize os campos na janela principal após a edição
+        self.atualizarCampos()
+
+    def closeCadastro(self):
+        self.close()
+
+
+class EditDialog(QDialog):
+    edicaoConcluida = pyqtSignal()
+
+    def __init__(self, record, parent=None):
+        super(EditDialog, self).__init__(parent)
+        self.record = record
+        self.initUI()
+
+    def initUI(self):
+        self.setGeometry(
+            100, 100, 800, 600
+        )  # Define a posição e tamanho inicial da janela
+
+        layout = QVBoxLayout()
+
+        # Crie um QFormLayout para os pares de rótulos e QLineEdit
+        form_layout = QFormLayout()
+
+        self.nameinput = QLineEdit(self.record[1])
+        self.nameinput.setMaxLength(30)  # Define o comprimento máximo
+        self.nameinput.setMinimumWidth(200)
+        self.nameinput.setPlaceholderText("Tipo")
+        form_layout.addRow("Tipo.:", self.nameinput)
+
+        self.cpfinput = QLineEdit(self.record[2])
+        self.cpfinput.setPlaceholderText("Nome / Razão: ")
+        form_layout.addRow("Nome / Razão: ", self.cpfinput)
+
+        self.rginput = QLineEdit(self.record[4])
+        self.rginput.setPlaceholderText("R.G")
+        form_layout.addRow("RG:", self.rginput)
+
+        self.mobileinput = QLineEdit(self.record[5])
+        self.mobileinput.setPlaceholderText("Telefone NO.")
+        form_layout.addRow("Telefone NO.:", self.mobileinput)
+
+        self.addressinput = QLineEdit(self.record[6])
+        self.addressinput.setPlaceholderText("Endereço")
+        form_layout.addRow("Endereço:", self.addressinput)
+
+        self.bairro = QLineEdit(self.record[8])
+        self.bairro.setPlaceholderText("Bairro")
+        form_layout.addRow("Bairro:", self.bairro)
+
+        self.addresscomplemento = QLineEdit(self.record[7])
+        self.addresscomplemento.setPlaceholderText("Complemento")
+        form_layout.addRow("Complemento:", self.addresscomplemento)
+
+        self.addresscidade = QLineEdit(self.record[11])
+        self.addresscidade.setPlaceholderText("Cidade")
+        form_layout.addRow("Cidade:", self.addresscidade)
+
+        self.cep = QLineEdit(self.record[10])
+        self.cep.setPlaceholderText("CEP")
+        form_layout.addRow("CEP.:", self.cep)
+
+        self.ederecoNumero = QLineEdit(self.record[9])
+        self.ederecoNumero.setPlaceholderText("Nr.")
+        form_layout.addRow("Nr.:", self.ederecoNumero)
+
+        # Adicione um botão para salvar as alterações
+        saveButton = QPushButton("Salvar Alterações")
+        saveButton.clicked.connect(self.salvarAlteracoes)
+        form_layout.addRow(saveButton)
+
+        layout.addLayout(form_layout)
+        layout.addStretch(1)
+        self.setLayout(layout)
+
+    # (29, 'Pessoa Física', 'ANTONIA CARA DE RATO', '26447897548', '294456487', '11971512237', 'RUA GERVAZIO DIAN', '', 'PORTO SEGURO', '78', '13255703', 'ITATIBA'
+
+    def salvarAlteracoes(self):
+        # Obtenha os novos dados dos campos de edição
+        tipo = self.nameinput.text()
+        razao = self.cpfinput.text()
+        rg = self.rginput.text()
+
+        telefone = self.mobileinput.text()
+        endereco = self.addressinput.text()
+        bairro = self.bairro.text()
+
+        complemento = self.addresscomplemento.text()
+        enderecoNumero = self.ederecoNumero.text()
+        cep = self.cep.text()
+        cidade = self.addresscidade.text()
+
+        # Atualize os campos na janela principal após a edição
+        self.record = (
+            self.record[0],
+            tipo,
+            razao,
+            rg,
+            telefone,
+            endereco,
+            bairro,
+            complemento,
+            enderecoNumero,
+            cep,
+            cidade,
+        )
+
+        # Faça as alterações necessárias no registro (por exemplo, atualize-o no banco de dados)
+        try:
+            self.cursor = conexao.banco.cursor()
+            # Execute uma instrução SQL para atualizar o campo específico
+            sql = f"UPDATE controle_clientes.clientes SET tipo = %s, nome = %s, rg = %s, telefone = %s, endereco = %s, bairro = %s, complemento = %s, numero = %s, cep = %s, cidade = %s WHERE codigo = %s"
+            valores = (
+                tipo,
+                razao,
+                rg,
+                telefone,
+                endereco,
+                bairro,
+                complemento,
+                enderecoNumero,
+                cep,
+                cidade,
+                self.record[0],
+            )
+            self.cursor.execute(sql, valores)
+
+            # Faça commit das alterações no banco de dados
+            conexao.banco.commit()
+
+            # Emita um sinal para indicar que a edição foi concluída
+            self.edicaoConcluida.emit()
+
+            # Feche a janela de edição
+            self.accept()
+
+        except Exception as e:
+            QMessageBox.warning(
+                QMessageBox(), "Erro", f"Não foi possível alterar os campos: {str(e)}"
             )
 
 
@@ -979,7 +1437,7 @@ class ListProdutos(QMainWindow):
         self.close()
 
 
-class SearchProdutos(QDialog):
+class SearchProdutos(QDialog, ConsultaProdutosEstoque):
     def __init__(self, parent=None):
         super(SearchProdutos, self).__init__(parent)
 
@@ -1050,12 +1508,28 @@ class SearchProdutos(QDialog):
         self.GroupBox1.setLayout(layout)
 
     def createGroupBox(self):
+        # vai buscar na Classe ConsultaProdutosEstoque
+        produtos = self.consultar_produtos_geral()
+
         self.GroupBox2 = QGroupBox()
 
         self.label_descricao = QLabel("Descrição", self)
         self.label_descricao.setAlignment(Qt.AlignLeft)
+
         self.descricao = QLineEdit()
+        self.descricao.setPlaceholderText("Descrição / Produto")
+
+        # Configuração do autocompletar
+        self.model_prod = QStandardItemModel()
+        for produto in produtos:
+            item = QStandardItem(produto)
+            self.model_prod.appendRow(item)
+
+        completer_prod = QCompleter(self.model_prod, self)
+        completer_prod.setCaseSensitivity(Qt.CaseInsensitive)
+        self.descricao.setCompleter(completer_prod)
         self.descricao.returnPressed.connect(self.consultaProdutolist)
+
         self.descricao.setFixedSize(447, 25)
 
         self.label_custo = QLabel("Preço de Custo", self)
@@ -1086,8 +1560,10 @@ class SearchProdutos(QDialog):
         self.GroupBox3 = QGroupBox("Sair da Consulta")
 
         self.defaultPushButton2 = QPushButton("Fechar")
-        self.defaultPushButton2.setDefault(True)
-        # self.defaultPushButton2.clicked.connect(self.closeConsulta)
+        self.defaultPushButton2.setDefault(False)
+        self.defaultPushButton2.setAutoDefault(False)
+        self.defaultPushButton2.clearFocus()
+        self.defaultPushButton2.clicked.connect(self.closeConsulta)
 
         layout = QGridLayout()
         layout.addWidget(self.defaultPushButton2, 2, 0, 1, 2)
@@ -1095,95 +1571,49 @@ class SearchProdutos(QDialog):
         self.GroupBox3.setLayout(layout)
 
     def consultaProdutolist(self):
-        self.consulta = ""
         self.consulta = self.descricao.text().upper()
 
         try:
-            self.cursor = conexao.banco.cursor()
-            sql = "SELECT codigo, descricao, ncm, un, preco, est.preco_compra \
-                   FROM produtos \
-                   inner join controle_clientes.estoque as est"
+            result = self.consultaProdutosLista(self.consulta)
 
-            where = ""
-            if self.consulta:
-                where = (
-                    """ where descricao = '{}' and est.idproduto = codigo """.format(
-                        self.consulta
-                    )
-                )
-
-                comando_sql = sql + where
-                self.cursor.execute(comando_sql)
-                result = self.cursor.fetchall()
-
-                self.cdprod.setText(str(result[0][0]))
-                self.descricao.setText(str(result[0][1]))
-                self.eanprod.setText(str(result[0][2]))
-                self.uninput.setText(str(result[0][3]))
-                self.preco.setText(str(result[0][4]))
-                self.precocusto.setText(str(result[1][5]))
-                self.gtinprod.setText("")
-
-        except Exception:
-            QMessageBox.warning(
-                QMessageBox(),
-                "aleleonel@gmail.com",
-                "Produto não cadastrado ou sem movimentação em estoque!",
-            )
-
-            self.cdprod.setText("")
-            self.descricao.setText("")
-            self.eanprod.setText("")
-            self.uninput.setText("")
-            self.preco.setText("")
-            self.precocusto.setText("")
+            self.cdprod.setText(str(result[0][0]))
+            self.descricao.setText(str(result[0][1]))
+            self.preco.setText(str(result[0][2]))
+            self.eanprod.setText(str(result[0][3]))
+            self.uninput.setText(str(result[0][4]))
+            self.precocusto.setText(str(result[0][5]))
             self.gtinprod.setText("")
 
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "Erro",
+                str(e),
+            )
+
     def consultaCodigolist(self):
-        self.consultacodigo = ""
         self.consultacodigo = self.cdprod.text()
 
         try:
-            self.cursor = conexao.banco.cursor()
-            sql = "SELECT codigo, descricao, ncm, un, preco, est.preco_compra \
-                   FROM produtos \
-                   inner join controle_clientes.estoque as est"
+            result = self.consultaCodigoslista(self.consultacodigo)
 
-            where = ""
-            if self.consultacodigo:
-                where = """ where codigo = '{}' and est.idproduto = codigo """.format(
-                    self.consultacodigo
-                )
-
-                comando_sql = sql + where
-                self.cursor.execute(comando_sql)
-                result = self.cursor.fetchall()
-
-                self.cdprod.setText(str(result[0][0]))
-                self.descricao.setText(str(result[0][1]))
-                self.eanprod.setText(str(result[0][2]))
-                self.uninput.setText(str(result[0][3]))
-                self.preco.setText(str(result[0][4]))
-                self.precocusto.setText(str(result[1][5]))
-                self.gtinprod.setText("")
-
-        except Exception:
-            QMessageBox.warning(
-                QMessageBox(),
-                "aleleonel@gmail.com",
-                "Produto não cadastrado ou sem movimentação em estoque!",
-            )
-
-            self.cdprod.setText("")
-            self.descricao.setText("")
-            self.eanprod.setText("")
-            self.uninput.setText("")
-            self.preco.setText("")
-            self.precocusto.setText("")
+            self.cdprod.setText(str(result[0][0]))
+            self.descricao.setText(str(result[0][1]))
+            self.eanprod.setText(str(result[0][2]))
+            self.uninput.setText(str(result[0][3]))
+            self.preco.setText(str(result[0][4]))
+            self.precocusto.setText(str(result[1][5]))
             self.gtinprod.setText("")
 
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "Erro",
+                str(e),
+            )
+
     def closeConsulta(self):
-        self.close()
+        self.hide()
 
 
 class DeleteProduto(QDialog):
@@ -1371,81 +1801,81 @@ class ListClientes(QMainWindow):
         self.close()
 
 
-class SearchClientes(QDialog):
-    """
-    Define uma nova janela onde executaremos
-    a busca no banco
-    """
+# class SearchClientes(QDialog):
+#     """
+#     Define uma nova janela onde executaremos
+#     a busca no banco
+#     """
 
-    def __init__(self, *args, **kwargs):
-        super(SearchClientes, self).__init__(*args, **kwargs)
+#     def __init__(self, *args, **kwargs):
+#         super(SearchClientes, self).__init__(*args, **kwargs)
 
-        self.cursor = conexao.banco.cursor()
-        self.QBtn = QPushButton()
-        self.QBtn.setText("Procurar")
+#         self.cursor = conexao.banco.cursor()
+#         self.QBtn = QPushButton()
+#         self.QBtn.setText("Procurar")
 
-        self.setWindowTitle("Pesquisar Cliente")
-        self.setFixedWidth(300)
-        self.setFixedHeight(100)
+#         self.setWindowTitle("Pesquisar Cliente")
+#         self.setFixedWidth(300)
+#         self.setFixedHeight(100)
 
-        # Chama a função de busca
-        self.QBtn.clicked.connect(self.searchcliente)
+#         # Chama a função de busca
+#         self.QBtn.clicked.connect(self.searchcliente)
 
-        layout = QVBoxLayout()
+#         layout = QVBoxLayout()
 
-        # Cria as caixas de digitaçãoe e
-        # verifica se é um numero
-        self.searchinput = QLineEdit()
-        self.onlyInt = QIntValidator()
-        self.searchinput.setValidator(self.onlyInt)
-        self.searchinput.setPlaceholderText("Codigo do cliente - somente número")
-        layout.addWidget(self.searchinput)
+#         # Cria as caixas de digitaçãoe e
+#         # verifica se é um numero
+#         self.searchinput = QLineEdit()
+#         self.onlyInt = QIntValidator()
+#         self.searchinput.setValidator(self.onlyInt)
+#         self.searchinput.setPlaceholderText("Codigo do cliente - somente número")
+#         layout.addWidget(self.searchinput)
 
-        layout.addWidget(self.QBtn)
-        self.setLayout(layout)
+#         layout.addWidget(self.QBtn)
+#         self.setLayout(layout)
 
-    # busca o cliente pelo codigo
-    def searchcliente(self):
-        searchroll = ""
-        searchroll = self.searchinput.text()
+#     # busca o cliente pelo codigo
+#     def searchcliente(self):
+#         searchroll = ""
+#         searchroll = self.searchinput.text()
 
-        try:
-            consulta_sql = "SELECT * FROM clientes WHERE codigo = " + str(searchroll)
-            self.cursor.execute(consulta_sql)
-            result = self.cursor.fetchall()
+#         try:
+#             consulta_sql = "SELECT * FROM clientes WHERE codigo = " + str(searchroll)
+#             self.cursor.execute(consulta_sql)
+#             result = self.cursor.fetchall()
 
-            for row in range(len(result)):
-                searchresult = (
-                    "Codigo : "
-                    + str(result[0][0])
-                    + "\n"
-                    + "Tipo : "
-                    + str(result[0][1])
-                    + "\n"
-                    + "Nome : "
-                    + str(result[0][2])
-                    + "\n"
-                    + "CPF : "
-                    + str(result[0][3])
-                    + "\n"
-                    + "R.G : "
-                    + str(result[0][4])
-                    + "\n"
-                    + "Tel : "
-                    + str(result[0][5])
-                    + "\n"
-                    + "Ender. : "
-                    + str(result[0][6])
-                )
+#             for row in range(len(result)):
+#                 searchresult = (
+#                     "Codigo : "
+#                     + str(result[0][0])
+#                     + "\n"
+#                     + "Tipo : "
+#                     + str(result[0][1])
+#                     + "\n"
+#                     + "Nome : "
+#                     + str(result[0][2])
+#                     + "\n"
+#                     + "CPF : "
+#                     + str(result[0][3])
+#                     + "\n"
+#                     + "R.G : "
+#                     + str(result[0][4])
+#                     + "\n"
+#                     + "Tel : "
+#                     + str(result[0][5])
+#                     + "\n"
+#                     + "Ender. : "
+#                     + str(result[0][6])
+#                 )
 
-            QMessageBox.information(
-                QMessageBox(), "Pesquisa realizada com sucesso!", searchresult
-            )
+#             QMessageBox.information(
+#                 QMessageBox(), "Pesquisa realizada com sucesso!", searchresult
+#             )
 
-        except Exception:
-            QMessageBox.warning(
-                QMessageBox(), "aleleonel@gmail.com", "A pesquisa falhou!"
-            )
+#         except Exception:
+#             QMessageBox.warning(
+#                 QMessageBox(), "aleleonel@gmail.com", "A pesquisa falhou!"
+#             )
 
 
 class DeleteCliente(QDialog):
@@ -1501,18 +1931,6 @@ class DeleteCliente(QDialog):
             QMessageBox.warning(
                 QMessageBox(), "aleleonel@gmail.com", "A Deleção falhou!"
             )
-
-
-# class DecimalLineEdit(QLineEdit):
-#     def __init__(self):
-#         super().__init__()
-
-#     def eventFilter(self, obj, event):
-#         if event.type() == event.KeyPress:
-#             if event.key() == 44:  # Código da tecla vírgula
-#                 event = event.replace(44, 46)  # Substituir vírgula por ponto
-
-#         return super().eventFilter(obj, event)
 
 
 class DecimalLineEdit(QLineEdit):
@@ -1761,7 +2179,7 @@ class FechamentoCaixa(QDialog):
         self.hide()
 
 
-class DataEntryForm(QWidget):
+class DataEntryForm(QWidget, ConsultaProdutosEstoque):
     def __init__(self):
         super().__init__()
 
@@ -1769,20 +2187,6 @@ class DataEntryForm(QWidget):
         consulta_sql = "SELECT * FROM clientes"
         self.cursor.execute(consulta_sql)
         result = self.cursor.fetchall()
-        self.close()
-
-        self.cursor = conexao.banco.cursor()
-
-        consulta_prod = """SELECT p.codigo, p.descricao, p.preco, p.ncm, p.un FROM produtos as p
-                            inner join controle_clientes.estoque as e
-                            where e.status = '{}'
-                            and e.estoque > '{}'
-                            and e.idproduto = p.codigo group by p.codigo""".format(
-            "E", 0
-        )
-
-        self.cursor.execute(consulta_prod)
-        result_prod = self.cursor.fetchall()
         self.close()
 
         self.preco = 0
@@ -1863,11 +2267,8 @@ class DataEntryForm(QWidget):
 
         self.layoutRight.addWidget(self.lineEditCliente)
 
-        produtos = []
-
-        for i in range(len(result_prod)):
-            if result_prod[i][1]:
-                produtos.append(result_prod[i][1])
+        # vai buscar na Classe ConsultaProdutosEstoque
+        produtos = self.consultar_produtos()
 
         self.lineEditDescription = QLineEdit()
         self.lineEditDescription.setPlaceholderText("Descrição / Produto")
