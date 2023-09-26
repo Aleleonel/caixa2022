@@ -554,14 +554,22 @@ class SearchClientes(QDialog):
             100, 100, 800, 600
         )  # Define a posição e tamanho inicial da janela
 
+        disableWidgetsCheckBox = QCheckBox("&Disable widgets")
+
         self.createTopLeftGroupBox()
         self.createGroupBoxSalvar()
         self.createGroupBox()
         self.createEndercoGroupBox()
         self.buscaregistros()
 
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox1.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox2.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox3.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox4.setDisabled)
+
         topLayout = QHBoxLayout()
         topLayout.addStretch(1)
+        topLayout.addWidget(disableWidgetsCheckBox)
 
         mainLayout = QGridLayout()
         mainLayout.addLayout(topLayout, 0, 0, 1, 2)
@@ -602,24 +610,20 @@ class SearchClientes(QDialog):
         # Crie um QFormLayout para os pares de rótulos e QLineEdit
         form_layout = QFormLayout()
 
-        self.rasao = QLineEdit()
-        self.rasao.setPlaceholderText("Nome / Razão: ")
+        self.cpfinput = QLineEdit()
+        self.cpfinput.setPlaceholderText("Nome / Razão: ")
         self.model = QStandardItemModel()
         self.model = clientes
         completer = QCompleter(self.model, self)
         completer.setCaseSensitivity(Qt.CaseInsensitive)
-        self.rasao.setCompleter(completer)
-        self.rasao.editingFinished.connect(self.buscaregistro)
-        self.rasao.setFocus(True)
-        form_layout.addRow("Nome / Razão: ", self.rasao)
+        self.cpfinput.setCompleter(completer)
+        self.cpfinput.editingFinished.connect(self.buscaregistro)
+        self.cpfinput.setFocus(True)
+        form_layout.addRow("Nome / Razão: ", self.cpfinput)
 
         self.rginput = QLineEdit()
         self.rginput.setPlaceholderText("R.G")
         form_layout.addRow("RG:", self.rginput)
-
-        self.cpfinput = QLineEdit()
-        self.cpfinput.setPlaceholderText("CPF")
-        form_layout.addRow("CPF.:", self.cpfinput)
 
         self.mobileinput = QLineEdit()
         self.mobileinput.setPlaceholderText("Telefone NO.")
@@ -736,7 +740,7 @@ class SearchClientes(QDialog):
     def buscaregistro(self):
         try:
             self.cursor = conexao.banco.cursor()
-            valor = self.rasao.text()
+            valor = self.cpfinput.text()
 
             comando_sql = "SELECT * FROM clientes WHERE nome LIKE %s"
             valor_busca = f"%{valor}%"
@@ -838,8 +842,7 @@ class SearchClientes(QDialog):
             record = self.records[self.current_record_index]
 
             self.nameinput.setText(record[1])
-            self.rasao.setText(record[2])
-            self.cpfinput.setText(record[4])
+            self.cpfinput.setText(record[2])
             self.rginput.setText(record[3])
 
             self.mobileinput.setText(record[5])
@@ -894,24 +897,21 @@ class EditDialog(QDialog):
         # Crie um QFormLayout para os pares de rótulos e QLineEdit
         form_layout = QFormLayout()
 
-        self.tipo = QLineEdit(self.record[1])
-        self.tipo.setMaxLength(30)  # Define o comprimento máximo
-        self.tipo.setMinimumWidth(30)
-        self.tipo.setPlaceholderText("Tipo")
-        self.tipo.setReadOnly(True)
-        form_layout.addRow("Tipo.:", self.tipo)
+        self.nameinput = QLineEdit(self.record[1])
+        self.nameinput.setMaxLength(30)  # Define o comprimento máximo
+        self.nameinput.setMinimumWidth(30)
+        self.nameinput.setPlaceholderText("Tipo")
+        self.nameinput.setReadOnly(True)
+        form_layout.addRow("Tipo.:", self.nameinput)
 
-        self.razao = QLineEdit(self.record[2])
-        self.razao.setPlaceholderText("Nome / Razão: ")
-        form_layout.addRow("Nome / Razão: ", self.razao)
+        self.cpfinput = QLineEdit(self.record[2])
+        self.cpfinput.setPlaceholderText("Nome / Razão: ")
+        form_layout.addRow("Nome / Razão: ", self.cpfinput)
 
         self.rginput = QLineEdit(self.record[3])
+        # self.rginput = QLineEdit(self.record[4])
         self.rginput.setPlaceholderText("R.G")
         form_layout.addRow("RG:", self.rginput)
-
-        self.cpfinput = QLineEdit(self.record[4])
-        self.cpfinput.setPlaceholderText("CPF")
-        form_layout.addRow("CPF.:", self.cpfinput)
 
         self.mobileinput = QLineEdit(self.record[5])
         self.mobileinput.setPlaceholderText("Telefone NO.")
@@ -954,10 +954,9 @@ class EditDialog(QDialog):
 
     def salvarAlteracoes(self):
         # Obtenha os novos dados dos campos de edição
-        tipo = self.tipo.text()
-        razao = self.razao.text()
+        tipo = self.nameinput.text()
+        razao = self.cpfinput.text()
         rg = self.rginput.text()
-        cpf = self.cpfinput.text()
 
         telefone = self.mobileinput.text()
         endereco = self.addressinput.text()
@@ -973,7 +972,6 @@ class EditDialog(QDialog):
             self.record[0],
             tipo,
             razao,
-            cpf,
             rg,
             telefone,
             endereco,
@@ -988,11 +986,10 @@ class EditDialog(QDialog):
         try:
             self.cursor = conexao.banco.cursor()
             # Execute uma instrução SQL para atualizar o campo específico
-            sql = f"UPDATE controle_clientes.clientes SET tipo = %s, nome = %s, cpf = %s,  rg = %s, telefone = %s, endereco = %s, bairro = %s, complemento = %s, numero = %s, cep = %s, cidade = %s WHERE codigo = %s"
+            sql = f"UPDATE controle_clientes.clientes SET tipo = %s, nome = %s, rg = %s, telefone = %s, endereco = %s, bairro = %s, complemento = %s, numero = %s, cep = %s, cidade = %s WHERE codigo = %s"
             valores = (
                 tipo,
                 razao,
-                cpf,
                 rg,
                 telefone,
                 endereco,
@@ -1024,17 +1021,21 @@ class CadastroClientes(QDialog):
     def __init__(self, *args, **kwargs):
         super(CadastroClientes, self).__init__(*args, **kwargs)
 
-        self.setGeometry(
-            100, 100, 800, 600
-        )  # Define a posição e tamanho inicial da janela
+        disableWidgetsCheckBox = QCheckBox("&Disable widgets")
 
         self.createTopLeftGroupBox()
         self.createGroupBoxSalvar()
         self.createGroupBox()
         self.createEndercoGroupBox()
 
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox1.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox2.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox3.setDisabled)
+        disableWidgetsCheckBox.toggled.connect(self.GroupBox4.setDisabled)
+
         topLayout = QHBoxLayout()
         topLayout.addStretch(1)
+        topLayout.addWidget(disableWidgetsCheckBox)
 
         mainLayout = QGridLayout()
         mainLayout.addLayout(topLayout, 0, 0, 1, 2)
@@ -1052,75 +1053,76 @@ class CadastroClientes(QDialog):
 
     def createGroupBox(self):
         self.GroupBox2 = QGroupBox()
+
         layout = QHBoxLayout()
-        form_layout = QFormLayout()
 
         self.cpfinput = QLineEdit()
-        self.cpfinput.setPlaceholderText("CPF")
-        form_layout.addRow("CPF.:", self.cpfinput)
+        self.cpfinput.setPlaceholderText("Cpf")
 
         self.rginput = QLineEdit()
         self.rginput.setPlaceholderText("R.G")
-        form_layout.addRow("RG.:", self.rginput)
 
         self.mobileinput = QLineEdit()
         self.mobileinput.setPlaceholderText("Telefone NO.")
-        form_layout.addRow("Telefone NO.", self.mobileinput)
 
-        layout.addLayout(form_layout)
+        layout.addWidget(self.cpfinput)
+        layout.addWidget(self.rginput)
+
+        layout.addWidget(self.mobileinput)
+
         layout.addStretch(1)
         self.GroupBox2.setLayout(layout)
 
     def createTopLeftGroupBox(self):
         self.GroupBox1 = QGroupBox("Cadastro de Clientes")
+
         layout = QVBoxLayout()
-        form_layout = QFormLayout()
 
         # Insere o ramo ou tipo /
         self.branchinput = QComboBox()
         self.branchinput.addItem("Pessoa Física")
         self.branchinput.addItem("Pessoa Jurídica")
-        form_layout.addRow("Tipo.:", self.branchinput)
 
         self.nameinput = QLineEdit()
         self.nameinput.setPlaceholderText("Nome / Razão")
-        form_layout.addRow("Nome / Razão", self.nameinput)
+
+        layout.addWidget(self.branchinput)
+        layout.addWidget(self.nameinput)
 
         layout.addStretch(1)
-        layout.addLayout(form_layout)
         self.GroupBox1.setLayout(layout)
 
     def createEndercoGroupBox(self):
         self.GroupBox4 = QGroupBox()
+
         layout = QVBoxLayout()
-        form_layout = QFormLayout()
 
         self.addressinput = QLineEdit()
         self.addressinput.setPlaceholderText("Logradouro")
-        form_layout.addRow("Endereço", self.addressinput)
 
         self.bairro = QLineEdit()
         self.bairro.setPlaceholderText("Bairro")
-        form_layout.addRow("Bairro", self.bairro)
 
         self.addresscomplemento = QLineEdit()
         self.addresscomplemento.setPlaceholderText("Complemento")
-        form_layout.addRow("Complemento", self.addresscomplemento)
 
         self.addresscidade = QLineEdit()
         self.addresscidade.setPlaceholderText("Cidade")
-        form_layout.addRow("Cidade", self.addresscidade)
 
         self.cep = QLineEdit()
         self.cep.setPlaceholderText("CEP")
-        form_layout.addRow("CEP", self.cep)
 
         self.ederecoNumero = QLineEdit()
         self.ederecoNumero.setPlaceholderText("Nr.")
-        form_layout.addRow("Nr.:", self.ederecoNumero)
+
+        layout.addWidget(self.addressinput)
+        layout.addWidget(self.bairro)
+        layout.addWidget(self.addresscomplemento)
+        layout.addWidget(self.ederecoNumero)
+        layout.addWidget(self.cep)
+        layout.addWidget(self.addresscidade)
 
         layout.addStretch(1)
-        layout.addLayout(form_layout)
         self.GroupBox4.setLayout(layout)
 
     def createGroupBoxSalvar(self):
