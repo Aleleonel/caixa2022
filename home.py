@@ -711,10 +711,7 @@ class SearchClientes(QDialog):
         self.editButton.clicked.connect(self.editarRegistro)
 
         self.defaultPushButton2 = QPushButton(self)
-        # self.defaultPushButton2.setDefault(True)
         self.defaultPushButton2.setIcon(QIcon("Icones/sair.png"))
-        # self.defaultPushButton2.setIconSize(QSize(20, 20))
-        # self.defaultPushButton2.setMinimumHeight(25)
         self.defaultPushButton2.clicked.connect(self.closeCadastro)
 
         layout = QGridLayout()
@@ -1550,6 +1547,7 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
         self.createTopLeftGroupBox()
         self.createGroupBoxSalvar()
         self.createGroupBox()
+        self.buscaregistrosProdutos()
 
         disableWidgetsCheckBox.toggled.connect(self.GroupBox1.setDisabled)
         disableWidgetsCheckBox.toggled.connect(self.GroupBox2.setDisabled)
@@ -1661,7 +1659,21 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
         self.GroupBox2.setLayout(layout)
 
     def createGroupBoxSalvar(self):
-        self.GroupBox3 = QGroupBox("Sair da Consulta")
+        self.GroupBox3 = QGroupBox()
+
+        # Adicione botões para avançar e voltar
+        self.nextButton = QPushButton("Próximo")
+        self.prevButton = QPushButton("Anterior")
+        self.firstButton = QPushButton("Primeiro")
+        self.lastButton = QPushButton("Último")
+
+        self.nextButton.clicked.connect(self.avancarRegistro)
+        self.prevButton.clicked.connect(self.voltarRegistro)
+        self.firstButton.clicked.connect(self.voltarPrimeiroRegistro)
+        self.lastButton.clicked.connect(self.avancarUltimoRegistro)
+
+        self.editButton = QPushButton("Editar")
+        # self.editButton.clicked.connect(self.editarRegistro)
 
         self.defaultPushButton2 = QPushButton("Fechar")
         self.defaultPushButton2.setDefault(False)
@@ -1670,9 +1682,106 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
         self.defaultPushButton2.clicked.connect(self.closeConsulta)
 
         layout = QGridLayout()
-        layout.addWidget(self.defaultPushButton2, 2, 0, 1, 2)
+
+        layout.addWidget(self.nextButton, 2, 0)
+        layout.addWidget(self.prevButton, 2, 1)
+        layout.addWidget(self.firstButton, 2, 2)
+        layout.addWidget(self.lastButton, 2, 3)
+        layout.addWidget(self.defaultPushButton2, 3, 0)
+        layout.addWidget(self.editButton, 3, 1)
+
         layout.setRowStretch(5, 1)
         self.GroupBox3.setLayout(layout)
+
+        # Inicialize uma variável para rastrear o índice do registro atual
+        self.current_record_index = 0
+        self.records = []
+
+    # def buscaregistrosProdutos(self):
+    #     try:
+    #         self.cursor = conexao.banco.cursor()
+    #         # comando_sql = "SELECT * FROM produtos"
+    #         comando_sql = """SELECT p.codigo, p.descricao, p.preco, p.ncm, p.un, e.preco_compra FROM produtos as p
+    #                         inner join controle_clientes.estoque as e
+    #                         where e.status = '{}'
+    #                         and e.estoque > '{}'
+    #                         and e.idproduto = p.codigo group by p.codigo""".format(
+    #             "E", 0
+    #         )
+
+    #         self.cursor.execute(comando_sql)
+    #         result = self.cursor.fetchall()
+    #         self.cursor.close()
+
+    #         # Armazene os registros e defina o índice atual para 0
+    #         self.records = [item for item in result if item]
+    #         self.current_record_index = 0
+
+    def buscaregistrosProdutos(self):
+        try:
+            self.cursor = conexao.banco.cursor()
+            comando_sql = """SELECT p.codigo, p.descricao, p.preco, p.ncm, p.un, MAX(e.preco_compra) as preco_compra
+                            FROM produtos as p
+                            INNER JOIN controle_clientes.estoque as e
+                            ON e.idproduto = p.codigo
+                            WHERE e.status = '{}'
+                            AND e.estoque > '{}'
+                            GROUP BY p.codigo, p.descricao, p.preco, p.ncm, p.un""".format(
+                "E", 0
+            )
+
+            self.cursor.execute(comando_sql)
+            result = self.cursor.fetchall()
+            self.cursor.close()
+
+            # Armazene os registros e defina o índice atual para 0
+            self.records = [item for item in result if item]
+            self.current_record_index = 0
+
+            # Atualize os campos com base no registro atual
+            self.atualizarCampos()
+
+        except Exception as e:
+            QMessageBox.warning(
+                QMessageBox(), "Erro", f"A busca de registros falhou: {str(e)}"
+            )
+
+    def avancarRegistro(self):
+        if self.current_record_index < len(self.records) - 1:
+            self.current_record_index += 1
+            self.atualizarCampos()
+            # self.updateNavigationButtons()
+
+    def voltarRegistro(self):
+        if self.current_record_index > 0:
+            self.current_record_index -= 1
+            self.atualizarCampos()
+            # self.updateNavigationButtons()
+
+    def avancarUltimoRegistro(self):
+        if len(self.records) > 0:
+            self.current_record_index = len(self.records) - 1
+            self.atualizarCampos()
+            # self.updateNavigationButtons()
+
+    def voltarPrimeiroRegistro(self):
+        if len(self.records) > 0:
+            self.current_record_index = 0
+            self.atualizarCampos()
+            # self.updateNavigationButtons()
+
+    def atualizarCampos(self):
+        if 0 <= self.current_record_index < len(self.records):
+            # Atualizar os campos com base no registro atual
+            record = self.records[self.current_record_index]
+
+            self.cdprod.setText(str(record[0]))
+            self.descricao.setText(str(record[1]))
+            self.preco.setText(str(record[2]))
+            self.eanprod.setText(str(record[3]))
+            self.uninput.setText(str(record[4]))
+            self.precocusto.setText(str(record[5]))
+            self.gtinprod.setText("")
 
     def consultaProdutolist(self):
         self.consulta = self.descricao.text().upper()
