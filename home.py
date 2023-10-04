@@ -770,11 +770,11 @@ class SearchClientes(QDialog):
             result = self.cursor.fetchall()
             self.cursor.close()
 
-            # Armazene os registros e defina o índice atual para 0
+            # Armazena os registros e define o índice atual para 0
             self.records = [item for item in result if item]
             self.current_record_index = 0
 
-            # Atualize os campos com base no registro atual
+            # Atualiza os campos com base no registro atual
             self.atualizarCampos()
 
         except Exception as e:
@@ -849,6 +849,7 @@ class SearchClientes(QDialog):
             self.addresscidade.setText(record[11])
 
     def editarRegistro(self):
+        self.atualizarCampos()
         if self.current_record_index < len(self.records):
             # Obtenha o registro atual
             record = self.records[self.current_record_index]
@@ -947,8 +948,6 @@ class EditDialog(QDialog):
         layout.addStretch(1)
         self.setLayout(layout)
 
-    # (29, 'Pessoa Física', 'ANTONIA CARA DE RATO', '26447897548', '294456487', '11971512237', 'RUA GERVAZIO DIAN', '', 'PORTO SEGURO', '78', '13255703', 'ITATIBA'
-
     def salvarAlteracoes(self):
         # Obtenha os novos dados dos campos de edição
         tipo = self.tipo.text()
@@ -1015,6 +1014,176 @@ class EditDialog(QDialog):
             QMessageBox.warning(
                 QMessageBox(), "Erro", f"Não foi possível alterar os campos: {str(e)}"
             )
+
+
+class EditProdutosDialog(QDialog):
+    edicaoConcluida = pyqtSignal()
+
+    def __init__(self, record, parent=None):
+        super(EditProdutosDialog, self).__init__(parent)
+        self.record = record
+        self.initUI()
+
+    def initUI(self):
+        self.setGeometry(
+            100, 100, 800, 600
+        )  # Define a posição e tamanho inicial da janela
+
+        self.createTopLeftGroupBox()
+        self.createGroupBoxSalvar()
+        self.createGroupBox()
+
+        topLayout = QHBoxLayout()
+        topLayout.addStretch(1)
+
+        mainLayout = QGridLayout()
+        mainLayout.addLayout(topLayout, 0, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox1, 1, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox2, 2, 0, 1, 2)
+        mainLayout.addWidget(self.GroupBox3, 4, 1, 1, 2)
+        mainLayout.setRowStretch(1, 1)
+        mainLayout.setRowStretch(2, 1)
+        mainLayout.setColumnStretch(0, 1)
+        mainLayout.setColumnStretch(1, 1)
+        self.setLayout(mainLayout)
+
+        self.setWindowTitle("EDITAR PRODUTOS")
+
+    def createTopLeftGroupBox(self):
+        self.GroupBox1 = QGroupBox("Edição de Itens")
+        # Crie um QFormLayout para os pares de rótulos e QLineEdit
+        form_layout = QFormLayout()
+        layout = QHBoxLayout()
+
+        # Insere o ramo ou tipo  /
+        # Criar uma tabela para cadastrar unidade de medida
+        self.uninput = QComboBox()
+        self.uninput.addItem("UN")
+        self.uninput.addItem("PÇ")
+        self.uninput.addItem("KG")
+        self.uninput.addItem("LT")
+        self.uninput.addItem("PT")
+        self.uninput.addItem("CX")
+
+        self.cdprod = QLineEdit(str(self.record[0]))
+        self.cdprod.setAlignment(Qt.AlignLeft)
+        self.cdprod.setFixedSize(107, 25)
+        form_layout.addRow("Codigo.:", self.cdprod)
+
+        self.eanprod = QLineEdit(str(self.record[3]))
+        self.eanprod.setFixedSize(107, 25)
+        form_layout.addRow("EAN.:", self.eanprod)
+
+        self.gtinprod = QLineEdit()
+        self.gtinprod.setFixedSize(107, 25)
+        form_layout.addRow("GTIN.:", self.gtinprod)
+
+        # layout.addStretch(1)
+        layout.addLayout(form_layout)
+        self.GroupBox1.setLayout(layout)
+
+    def createGroupBox(self):
+        self.GroupBox2 = QGroupBox()
+
+        self.label_descricao = QLabel("Descrição", self)
+        self.label_descricao.setAlignment(Qt.AlignLeft)
+        self.descricao = QLineEdit(str(self.record[1]))
+        self.descricao.setFixedSize(447, 25)
+
+        self.label_custo = QLabel("Preço de Custo", self)
+        self.label_custo.setAlignment(Qt.AlignLeft)
+        self.precocusto = QLineEdit(str(self.record[5]))
+        self.precocusto.setFixedSize(107, 25)
+
+        self.label_venda = QLabel("Preço de Venda", self)
+        self.label_venda.setAlignment(Qt.AlignLeft)
+        self.preco = QLineEdit(str(self.record[2]))
+        self.preco.setFixedSize(107, 25)
+
+        self.label_unidade = QLabel("Un. de Medida", self)
+        self.uninput.setFixedSize(107, 25)
+
+        layout = QVBoxLayout()
+
+        layout.addWidget(self.label_descricao)
+        layout.addWidget(self.descricao)
+
+        layout.addWidget(self.label_custo)
+        layout.addWidget(self.precocusto)
+
+        layout.addWidget(self.label_venda)
+        layout.addWidget(self.preco)
+
+        layout.addWidget(self.label_unidade)
+        layout.addWidget(self.uninput)
+
+        layout.addStretch(1)
+        self.GroupBox2.setLayout(layout)
+
+    def createGroupBoxSalvar(self):
+        self.GroupBox3 = QGroupBox("Salvar Cadastro")
+
+        self.defaultPushButton = QPushButton("Salvar")
+        self.defaultPushButton.setDefault(True)
+        self.defaultPushButton.clicked.connect(self.salvarAlteracoes)
+
+        self.defaultPushButton2 = QPushButton("Fechar")
+        self.defaultPushButton2.setDefault(True)
+        self.defaultPushButton2.clicked.connect(self.closeCadastro)
+
+        layout = QGridLayout()
+        layout.addWidget(self.defaultPushButton, 1, 0, 1, 2)
+        layout.addWidget(self.defaultPushButton2, 2, 0, 1, 2)
+        layout.setRowStretch(5, 1)
+        self.GroupBox3.setLayout(layout)
+
+    def salvarAlteracoes(self):
+        # Obtenha os novos dados dos campos de edição
+
+        descricao = self.descricao.text()
+        preco = self.preco.text()
+        ncm = self.eanprod.text()
+        un = self.uninput.currentText()
+
+        # Atualiza os campos na janela principal após a edição
+        self.record = (
+            self.record[0],
+            descricao,
+            preco,
+            ncm,
+            un,
+        )
+
+        # alterações necessárias no registro
+        try:
+            self.cursor = conexao.banco.cursor()
+            # Execute uma instrução SQL para atualizar o campo específico
+            sql = f"UPDATE controle_clientes.produtos SET descricao = %s, preco = %s, ncm = %s,  un = %s WHERE codigo = %s"
+            valores = (
+                descricao,
+                preco,
+                ncm,
+                un,
+                self.record[0],
+            )
+            self.cursor.execute(sql, valores)
+
+            # Faça commit das alterações no banco de dados
+            conexao.banco.commit()
+
+            # Emita um sinal para indicar que a edição foi concluída
+            self.edicaoConcluida.emit()
+
+            # Feche a janela de edição
+            self.accept()
+
+        except Exception as e:
+            QMessageBox.warning(
+                QMessageBox(), "Erro", f"Não foi possível alterar os campos: {str(e)}"
+            )
+
+    def closeCadastro(self):
+        self.close()
 
 
 class CadastroClientes(QDialog):
@@ -1260,19 +1429,12 @@ class CadastroProdutos(QDialog):
     def __init__(self, parent=None):
         super(CadastroProdutos, self).__init__(parent)
 
-        disableWidgetsCheckBox = QCheckBox("&Disable widgets")
-
         self.createTopLeftGroupBox()
         self.createGroupBoxSalvar()
         self.createGroupBox()
 
-        disableWidgetsCheckBox.toggled.connect(self.GroupBox1.setDisabled)
-        disableWidgetsCheckBox.toggled.connect(self.GroupBox2.setDisabled)
-        disableWidgetsCheckBox.toggled.connect(self.GroupBox3.setDisabled)
-
         topLayout = QHBoxLayout()
         topLayout.addStretch(1)
-        topLayout.addWidget(disableWidgetsCheckBox)
 
         mainLayout = QGridLayout()
         mainLayout.addLayout(topLayout, 0, 0, 1, 2)
@@ -1542,20 +1704,13 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
     def __init__(self, parent=None):
         super(SearchProdutos, self).__init__(parent)
 
-        disableWidgetsCheckBox = QCheckBox("&Disable widgets")
-
         self.createTopLeftGroupBox()
         self.createGroupBoxSalvar()
         self.createGroupBox()
         self.buscaregistrosProdutos()
 
-        disableWidgetsCheckBox.toggled.connect(self.GroupBox1.setDisabled)
-        disableWidgetsCheckBox.toggled.connect(self.GroupBox2.setDisabled)
-        disableWidgetsCheckBox.toggled.connect(self.GroupBox3.setDisabled)
-
         topLayout = QHBoxLayout()
         topLayout.addStretch(1)
-        topLayout.addWidget(disableWidgetsCheckBox)
 
         mainLayout = QGridLayout()
         mainLayout.addLayout(topLayout, 0, 0, 1, 2)
@@ -1580,7 +1735,7 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
 
         self.codigo_produto = QLabel("Codigo")
         self.cdprod = QLineEdit()
-        self.cdprod.returnPressed.connect(self.consultaCodigolist)
+        self.cdprod.returnPressed.connect(self.setFocusAndCallFunction2)
         self.codigo_produto.setAlignment(Qt.AlignLeft)
         self.cdprod.setFixedSize(60, 25)
 
@@ -1620,6 +1775,7 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
 
         self.descricao = QLineEdit()
         self.descricao.setPlaceholderText("Descrição / Produto")
+        self.descricao.setFocus(True)
 
         # Configuração do autocompletar
         self.model_prod = QStandardItemModel()
@@ -1630,7 +1786,8 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
         completer_prod = QCompleter(self.model_prod, self)
         completer_prod.setCaseSensitivity(Qt.CaseInsensitive)
         self.descricao.setCompleter(completer_prod)
-        self.descricao.returnPressed.connect(self.consultaProdutolist)
+        # self.descricao.returnPressed.connect(self.consultaProdutolist)
+        self.descricao.returnPressed.connect(self.setFocusAndCallFunction)
 
         self.descricao.setFixedSize(447, 25)
 
@@ -1658,13 +1815,23 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
         layout.addStretch(1)
         self.GroupBox2.setLayout(layout)
 
+    def setFocusAndCallFunction(self):
+        self.precocusto.setFocus()
+        self.consultaProdutolist()
+
+    def setFocusAndCallFunction2(self):
+        self.precocusto.setFocus()
+        if self.editButton.hasFocus():
+            self.editButton.clearFocus()
+        self.consultaCodigolist()
+
     def createGroupBoxSalvar(self):
         self.GroupBox3 = QGroupBox()
 
         # Adicione botões para avançar e voltar
+        self.firstButton = QPushButton("Primeiro")
         self.nextButton = QPushButton("Próximo")
         self.prevButton = QPushButton("Anterior")
-        self.firstButton = QPushButton("Primeiro")
         self.lastButton = QPushButton("Último")
 
         self.nextButton.clicked.connect(self.avancarRegistro)
@@ -1673,7 +1840,7 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
         self.lastButton.clicked.connect(self.avancarUltimoRegistro)
 
         self.editButton = QPushButton("Editar")
-        # self.editButton.clicked.connect(self.editarRegistro)
+        self.editButton.clicked.connect(self.editarRegistro)
 
         self.defaultPushButton2 = QPushButton("Fechar")
         self.defaultPushButton2.setDefault(False)
@@ -1683,39 +1850,19 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
 
         layout = QGridLayout()
 
-        layout.addWidget(self.nextButton, 2, 0)
+        # Modifique a disposição dos botões
+        layout.addWidget(self.editButton, 1, 0)
+        layout.addWidget(self.firstButton, 2, 0)
         layout.addWidget(self.prevButton, 2, 1)
-        layout.addWidget(self.firstButton, 2, 2)
+        layout.addWidget(self.nextButton, 2, 2)
         layout.addWidget(self.lastButton, 2, 3)
-        layout.addWidget(self.defaultPushButton2, 3, 0)
-        layout.addWidget(self.editButton, 3, 1)
-
+        layout.addWidget(self.defaultPushButton2, 1, 1)
         layout.setRowStretch(5, 1)
         self.GroupBox3.setLayout(layout)
 
-        # Inicialize uma variável para rastrear o índice do registro atual
+        # Inicializa a variável para rastrear o índice do registro atual
         self.current_record_index = 0
         self.records = []
-
-    # def buscaregistrosProdutos(self):
-    #     try:
-    #         self.cursor = conexao.banco.cursor()
-    #         # comando_sql = "SELECT * FROM produtos"
-    #         comando_sql = """SELECT p.codigo, p.descricao, p.preco, p.ncm, p.un, e.preco_compra FROM produtos as p
-    #                         inner join controle_clientes.estoque as e
-    #                         where e.status = '{}'
-    #                         and e.estoque > '{}'
-    #                         and e.idproduto = p.codigo group by p.codigo""".format(
-    #             "E", 0
-    #         )
-
-    #         self.cursor.execute(comando_sql)
-    #         result = self.cursor.fetchall()
-    #         self.cursor.close()
-
-    #         # Armazene os registros e defina o índice atual para 0
-    #         self.records = [item for item in result if item]
-    #         self.current_record_index = 0
 
     def buscaregistrosProdutos(self):
         try:
@@ -1734,12 +1881,20 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
             result = self.cursor.fetchall()
             self.cursor.close()
 
-            # Armazene os registros e defina o índice atual para 0
+            # Armazena os registros e define o índice atual para 0
             self.records = [item for item in result if item]
             self.current_record_index = 0
 
+            if not self.records:
+                QMessageBox.information(
+                    self, "Informação", "Nenhum registro encontrado para a pesquisa."
+                )
+
             # Atualize os campos com base no registro atual
             self.atualizarCampos()
+
+            # Atualize a habilitação dos botões de navegação
+            self.updateNavigationButtons()
 
         except Exception as e:
             QMessageBox.warning(
@@ -1750,25 +1905,25 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
         if self.current_record_index < len(self.records) - 1:
             self.current_record_index += 1
             self.atualizarCampos()
-            # self.updateNavigationButtons()
+            self.updateNavigationButtons()
 
     def voltarRegistro(self):
         if self.current_record_index > 0:
             self.current_record_index -= 1
             self.atualizarCampos()
-            # self.updateNavigationButtons()
+            self.updateNavigationButtons()
 
     def avancarUltimoRegistro(self):
         if len(self.records) > 0:
             self.current_record_index = len(self.records) - 1
             self.atualizarCampos()
-            # self.updateNavigationButtons()
+            self.updateNavigationButtons()
 
     def voltarPrimeiroRegistro(self):
         if len(self.records) > 0:
             self.current_record_index = 0
             self.atualizarCampos()
-            # self.updateNavigationButtons()
+            self.updateNavigationButtons()
 
     def atualizarCampos(self):
         if 0 <= self.current_record_index < len(self.records):
@@ -1782,6 +1937,29 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
             self.uninput.setText(str(record[4]))
             self.precocusto.setText(str(record[5]))
             self.gtinprod.setText("")
+
+    def updateNavigationButtons(self):
+        num_records = len(self.records)
+        if num_records == 0:
+            self.firstButton.setEnabled(False)
+            self.prevButton.setEnabled(False)
+            self.nextButton.setEnabled(False)
+            self.lastButton.setEnabled(False)
+        elif self.current_record_index == 0:
+            self.firstButton.setEnabled(False)
+            self.prevButton.setEnabled(False)
+            self.nextButton.setEnabled(True)
+            self.lastButton.setEnabled(True)
+        elif self.current_record_index == num_records - 1:
+            self.firstButton.setEnabled(True)
+            self.prevButton.setEnabled(True)
+            self.nextButton.setEnabled(False)
+            self.lastButton.setEnabled(False)
+        else:
+            self.firstButton.setEnabled(True)
+            self.prevButton.setEnabled(True)
+            self.nextButton.setEnabled(True)
+            self.lastButton.setEnabled(True)
 
     def consultaProdutolist(self):
         self.consulta = self.descricao.text().upper()
@@ -1804,6 +1982,13 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
                 str(e),
             )
 
+        # Armazena os registros e define o índice atual para 0
+        self.records = [item for item in result if item]
+        self.current_record_index = 0
+
+        # Atualize os campos com base no registro atual
+        self.atualizarCampos()
+
     def consultaCodigolist(self):
         self.consultacodigo = self.cdprod.text()
 
@@ -1815,7 +2000,7 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
             self.eanprod.setText(str(result[0][2]))
             self.uninput.setText(str(result[0][3]))
             self.preco.setText(str(result[0][4]))
-            self.precocusto.setText(str(result[1][5]))
+            self.precocusto.setText(str(result[0][5]))
             self.gtinprod.setText("")
 
         except Exception as e:
@@ -1824,6 +2009,34 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
                 "Erro",
                 str(e),
             )
+
+        # Armazene os registros e defina o índice atual para 0
+        self.records = [item for item in result if item]
+        self.current_record_index = 0
+
+        # Atualize os campos com base no registro atual
+        self.atualizarCampos()
+
+    def editarRegistro(self):
+        if self.current_record_index < len(self.records):
+            # Obtenha o registro atual
+            record = self.records[self.current_record_index]
+
+            # Abra uma janela de edição de registro ou um diálogo de edição aqui
+            # Passe os dados do registro para a janela de edição
+
+            # Por exemplo, você pode criar uma nova janela de edição:
+            editDialog = EditProdutosDialog(record)
+
+            # Conecte um sinal para atualizar os dados após a edição ser concluída
+            editDialog.edicaoConcluida.connect(self.atualizarRegistroEditado)
+
+            # Exiba a janela de edição
+            editDialog.exec_()
+
+    def atualizarRegistroEditado(self):
+        # Atualize os campos na janela principal após a edição
+        self.atualizarCampos()
 
     def closeConsulta(self):
         self.hide()
