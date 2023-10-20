@@ -37,13 +37,12 @@ class ConsultaProdutosEstoque:
 
     def consultar_produtos(self):
         """Consulta produtos na hora da venda, tras apenas itens com saldo em estoque"""
-        consulta_prod = """SELECT p.codigo, p.descricao, p.preco, p.ncm, p.un, p.status FROM produtos as p
+        consulta_prod = """SELECT p.codigo, p.descricao, p.preco, p.ncm, p.un FROM produtos as p
                             inner join controle_clientes.estoque as e
                             where e.status = '{}'
                             and e.estoque > '{}'
-                            and p.status = '{}'
                             and e.idproduto = p.codigo group by p.codigo""".format(
-            "E", 0, 1
+            "E", 0
         )
 
         self.cursor.execute(consulta_prod)
@@ -551,8 +550,6 @@ class SearchClientes(QDialog):
     def __init__(self, *args, **kwargs):
         super(SearchClientes, self).__init__(*args, **kwargs)
 
-        self.editDialog = None  # Variável para armazenar o EditDialog
-
         self.setGeometry(
             100, 100, 800, 600
         )  # Define a posição e tamanho inicial da janela
@@ -632,26 +629,6 @@ class SearchClientes(QDialog):
         self.mobileinput.setPlaceholderText("Telefone NO.")
         self.mobileinput.setReadOnly(True)
         form_layout.addRow("Telefone NO.:", self.mobileinput)
-
-        # Adicione uma instância do modelo de dados
-        self.headers = [
-            "Tipo",
-            "Nome / Razão",
-            "RG",
-            "CPF",
-            "Telefone",
-            "Endereço",
-            "Bairro",
-            "Complemento",
-            "Nr.",
-            "CEP",
-            "Cidade",
-        ]
-        self.model = ClientTableModel([], self.headers)
-        self.tableView = QTableView()
-        self.tableView.setModel(self.model)
-
-        # layout.addWidget(self.tableView)
 
         # Adicione o QFormLayout ao layout vertical
         layout.addLayout(form_layout)
@@ -755,7 +732,7 @@ class SearchClientes(QDialog):
         layout.setRowStretch(5, 1)
         self.GroupBox3.setLayout(layout)
 
-        # Inicializa uma variável para rastrear o índice do registro atual
+        # Inicialize uma variável para rastrear o índice do registro atual
         self.current_record_index = 0
         self.records = []
 
@@ -779,10 +756,10 @@ class SearchClientes(QDialog):
                     self, "Informação", "Nenhum registro encontrado para a pesquisa."
                 )
 
-            # Atualiza os campos com base no registro atual
+            # Atualize os campos com base no registro atual
             self.atualizarCampos()
 
-            # Atualiza a habilitação dos botões de navegação
+            # Atualize a habilitação dos botões de navegação
             self.updateNavigationButtons()
 
         except Exception as e:
@@ -799,10 +776,8 @@ class SearchClientes(QDialog):
             result = self.cursor.fetchall()
             self.cursor.close()
 
-            # Atualiza o modelo de dados com os registros obtidos
+            # Armazena os registros e define o índice atual para 0
             self.records = [item for item in result if item]
-            self.model = ClientTableModel(self.records, self.headers)
-            self.tableView.setModel(self.model)
             self.current_record_index = 0
 
             # Atualiza os campos com base no registro atual
@@ -880,7 +855,9 @@ class SearchClientes(QDialog):
             self.addresscidade.setText(record[11])
 
             # Atualize o status do checkbox com base no registro atual
-            self.checkbox.setChecked(bool(record[13]))
+            self.checkbox.setChecked(
+                bool(record[13])
+            )  # Supondo que a coluna de status seja a coluna 12
 
             # Atualize a habilitação dos botões de navegação
             self.updateNavigationButtons()
@@ -891,14 +868,17 @@ class SearchClientes(QDialog):
             # Obtenha o registro atual
             record = self.records[self.current_record_index]
 
-            # Crie uma instância de EditDialog e atribua-a a self.editDialog
-            self.editDialog = EditDialog(record)
+            # Abra uma janela de edição de registro ou um diálogo de edição aqui
+            # Passe os dados do registro para a janela de edição
+
+            # Por exemplo, você pode criar uma nova janela de edição:
+            editDialog = EditDialog(record)
 
             # Conecte um sinal para atualizar os dados após a edição ser concluída
-            self.editDialog.edicaoConcluida.connect(self.atualizarRegistroEditado)
+            editDialog.edicaoConcluida.connect(self.atualizarRegistroEditado)
 
             # Exiba a janela de edição
-            self.editDialog.exec_()
+            editDialog.exec_()
 
     def alterarStatus(self):
         if 0 <= self.current_record_index < len(self.records):
@@ -908,6 +888,7 @@ class SearchClientes(QDialog):
                 1 if self.checkbox.isChecked() else 0
             )  # 1 para ativo, 0 para inativo
 
+            # Substitua 'sua_tabela' pelo nome da tabela onde você deseja alterar o status.
             query = (
                 "UPDATE controle_clientes.clientes SET status = %s WHERE codigo = %s"
             )
@@ -1017,9 +998,25 @@ class EditDialog(QDialog):
         cep = self.cep.text()
         cidade = self.addresscidade.text()
 
+        # Atualize os campos na janela principal após a edição
+        self.record = (
+            self.record[0],
+            tipo,
+            razao,
+            cpf,
+            rg,
+            telefone,
+            endereco,
+            bairro,
+            complemento,
+            enderecoNumero,
+            cep,
+            cidade,
+        )
+
+        # Faça as alterações necessárias no registro (por exemplo, atualize-o no banco de dados)
         try:
             self.cursor = conexao.banco.cursor()
-
             # Execute uma instrução SQL para atualizar o campo específico
             sql = f"UPDATE controle_clientes.clientes SET tipo = %s, nome = %s, cpf = %s,  rg = %s, telefone = %s, endereco = %s, bairro = %s, complemento = %s, numero = %s, cep = %s, cidade = %s WHERE codigo = %s"
             valores = (
@@ -1051,31 +1048,6 @@ class EditDialog(QDialog):
             QMessageBox.warning(
                 QMessageBox(), "Erro", f"Não foi possível alterar os campos: {str(e)}"
             )
-
-
-class ClientTableModel(QAbstractTableModel):
-    def __init__(self, data, headers, parent=None):
-        super(ClientTableModel, self).__init__(parent)
-        self.data = data
-        self.headers = headers
-
-    def rowCount(self, parent=Qt.DisplayRole):
-        return len(self.data)
-
-    def columnCount(self, parent=Qt.DisplayRole):
-        return len(self.headers)
-
-    def data(self, index, role=Qt.DisplayRole):
-        if role == Qt.DisplayRole:
-            row = index.row()
-            col = index.column()
-            return str(self.data[row][col])
-        return None
-
-    def headerData(self, section, orientation, role=Qt.DisplayRole):
-        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            return self.headers[section]
-        return None
 
 
 class EditProdutosDialog(QDialog):
@@ -1154,7 +1126,7 @@ class EditProdutosDialog(QDialog):
 
         self.label_custo = QLabel("Preço de Custo", self)
         self.label_custo.setAlignment(Qt.AlignLeft)
-        self.precocusto = QLineEdit(str(self.record[6]))
+        self.precocusto = QLineEdit(str(self.record[5]))
         self.precocusto.setFixedSize(107, 25)
 
         self.label_venda = QLabel("Preço de Venda", self)
@@ -1246,31 +1218,6 @@ class EditProdutosDialog(QDialog):
 
     def closeCadastro(self):
         self.close()
-
-
-class ProdutoTableModel(QAbstractTableModel):
-    def __init__(self, data, headers, parent=None):
-        super(ProdutoTableModel, self).__init__(parent)
-        self.data = data
-        self.headers = headers
-
-    def rowCount(self, parent=Qt.DisplayRole):
-        return len(self.data)
-
-    def columnCount(self, parent=Qt.DisplayRole):
-        return len(self.headers)
-
-    def data(self, index, role=Qt.DisplayRole):
-        if role == Qt.DisplayRole:
-            row = index.row()
-            col = index.column()
-            return str(self.data[row][col])
-        return None
-
-    def headerData(self, section, orientation, role=Qt.DisplayRole):
-        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            return self.headers[section]
-        return None
 
 
 class CadastroClientes(QDialog):
@@ -1791,8 +1738,6 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
     def __init__(self, parent=None):
         super(SearchProdutos, self).__init__(parent)
 
-        self.editDialog = None  # Variável para armazenar o EditDialog
-
         self.createTopLeftGroupBox()
         self.createGroupBoxSalvar()
         self.createGroupBox()
@@ -1838,21 +1783,7 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
         self.codigo_gtin.setAlignment(Qt.AlignRight)
         self.gtinprod.setFixedSize(200, 25)
 
-        # Adicione uma instância do modelo de dados
-        self.headers = [
-            "codigo",
-            "Desricao",
-            "Preco",
-            "NCM",
-            "UN",
-            "STATUS",
-        ]
-        self.model = ProdutoTableModel([], self.headers)
-        self.tableView = QTableView()
-        self.tableView.setModel(self.model)
-
         layout = QHBoxLayout()
-
         layout.addWidget(self.codigo_produto)
         layout.addWidget(self.cdprod)
 
@@ -1872,10 +1803,6 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
         produtos = self.consultar_produtos_geral()
 
         self.GroupBox2 = QGroupBox()
-
-        self.checkbox = QCheckBox("Ativo")
-        self.checkbox.setChecked(True)  # Inicialmente definido como ativo
-        self.checkbox.setFixedSize(100, 25)
 
         self.label_descricao = QLabel("Descrição", self)
         self.label_descricao.setAlignment(Qt.AlignLeft)
@@ -1910,8 +1837,6 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
 
         layout = QVBoxLayout()
 
-        layout.addWidget(self.checkbox)
-
         layout.addWidget(self.label_descricao)
         layout.addWidget(self.descricao)
 
@@ -1923,9 +1848,6 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
 
         layout.addStretch(1)
         self.GroupBox2.setLayout(layout)
-
-        # Conecta o slot para atualizar o banco de dados quando o checkbox for alterado
-        self.checkbox.stateChanged.connect(self.alterarProdutosStatus)
 
     def setFocusAndCallFunction(self):
         self.precocusto.setFocus()
@@ -1979,7 +1901,7 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
     def buscaregistrosProdutos(self):
         try:
             self.cursor = conexao.banco.cursor()
-            comando_sql = """SELECT p.codigo, p.descricao, p.preco, p.ncm, p.un, p.status, MAX(e.preco_compra) as preco_compra
+            comando_sql = """SELECT p.codigo, p.descricao, p.preco, p.ncm, p.un, MAX(e.preco_compra) as preco_compra
                             FROM produtos as p
                             INNER JOIN controle_clientes.estoque as e
                             ON e.idproduto = p.codigo
@@ -1993,10 +1915,8 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
             result = self.cursor.fetchall()
             self.cursor.close()
 
-            # Atualiza o modelo de dados com os registros obtidos
+            # Armazena os registros e define o índice atual para 0
             self.records = [item for item in result if item]
-            self.model = ProdutoTableModel(self.records, self.headers)
-            self.tableView.setModel(self.model)
             self.current_record_index = 0
 
             if not self.records:
@@ -2014,24 +1934,6 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
             QMessageBox.warning(
                 QMessageBox(), "Erro", f"A busca de registros falhou: {str(e)}"
             )
-
-    def alterarProdutosStatus(self):
-        if 0 <= self.current_record_index < len(self.records):
-            cursor = conexao.banco.cursor()
-
-            novo_status = (
-                1 if self.checkbox.isChecked() else 0
-            )  # 1 para ativo, 0 para inativo
-
-            query = (
-                "UPDATE controle_clientes.produtos SET status = %s WHERE codigo = %s"
-            )
-            id_registro = self.records[self.current_record_index][
-                0
-            ]  # Obtém o ID do registro atual
-
-            cursor.execute(query, (novo_status, id_registro))
-            conexao.banco.commit()
 
     def avancarRegistro(self):
         if self.current_record_index < len(self.records) - 1:
@@ -2067,12 +1969,7 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
             self.preco.setText(str(record[2]))
             self.eanprod.setText(str(record[3]))
             self.uninput.setText(str(record[4]))
-            self.precocusto.setText(str(record[6]))
-
-            # Atualiza o status do checkbox com base no registro atual
-            self.checkbox.setChecked(bool(record[5]))
-
-            # implementar codigo GTIN
+            self.precocusto.setText(str(record[5]))
             self.gtinprod.setText("")
 
     def updateNavigationButtons(self):
@@ -2132,32 +2029,27 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
         try:
             result = self.consultaCodigoslista(self.consultacodigo)
 
-            if not result:
-                # Se nenhum resultado for encontrado, exiba uma mensagem
-                QMessageBox.information(
-                    self,
-                    "Informação",
-                    "Nenhum registro encontrado para o código fornecido.",
-                )
-                return
-
             self.cdprod.setText(str(result[0][0]))
             self.descricao.setText(str(result[0][1]))
             self.eanprod.setText(str(result[0][2]))
-            self.uninput.setCurrentText(str(result[0][3]))
+            self.uninput.setText(str(result[0][3]))
             self.preco.setText(str(result[0][4]))
             self.precocusto.setText(str(result[0][5]))
             self.gtinprod.setText("")
 
-            # Armazene os registros e defina o índice atual para 0
-            self.records = [item for item in result if item]
-            self.current_record_index = 0
-
-            # Atualize os campos com base no registro atual
-            self.atualizarCampos()
-
         except Exception as e:
-            QMessageBox.warning(self, "Erro", str(e))
+            QMessageBox.warning(
+                self,
+                "Erro",
+                str(e),
+            )
+
+        # Armazene os registros e defina o índice atual para 0
+        self.records = [item for item in result if item]
+        self.current_record_index = 0
+
+        # Atualize os campos com base no registro atual
+        self.atualizarCampos()
 
     def editarRegistro(self):
         if self.current_record_index < len(self.records):
@@ -2177,7 +2069,8 @@ class SearchProdutos(QDialog, ConsultaProdutosEstoque):
             editDialog.exec_()
 
     def atualizarRegistroEditado(self):
-        self.close()
+        # Atualize os campos na janela principal após a edição
+        self.atualizarCampos()
 
     def closeConsulta(self):
         self.hide()
@@ -2673,7 +2566,11 @@ class DataEntryForm(QWidget, ConsultaProdutosEstoque):
     def __init__(self):
         super().__init__()
 
-        self.consulta_clientes()  # consulta banco de dados cadastro de clientes
+        self.cursor = conexao.banco.cursor()
+        consulta_sql = "SELECT * FROM clientes where status = {} ".format(1)
+        self.cursor.execute(consulta_sql)
+        result = self.cursor.fetchall()
+        self.close()
 
         self.preco = 0
         self.TOTAL = 0
@@ -2736,10 +2633,15 @@ class DataEntryForm(QWidget, ConsultaProdutosEstoque):
         self.lineEditdata.setEnabled(False)
         self.layoutRight.addWidget(self.lineEditdata)
 
+        clientes = []
+        for i in range(len(result)):
+            if result[i][2]:
+                clientes.append(result[i][2])
+
         self.lineEditCliente = QLineEdit()
         self.lineEditCliente.setPlaceholderText("Nome / Razão")
         self.model = QStandardItemModel()
-        self.model = self.clientes
+        self.model = clientes
         completer = QCompleter(self.model, self)
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.lineEditCliente.setCompleter(completer)
@@ -2856,19 +2758,6 @@ class DataEntryForm(QWidget, ConsultaProdutosEstoque):
             pass
 
         self.fill_table()
-
-    def consulta_clientes(self):
-        self.cursor = conexao.banco.cursor()
-        consulta_sql = "SELECT * FROM clientes where status = {} ".format(1)
-        self.cursor.execute(consulta_sql)
-        self.result = self.cursor.fetchall()
-
-        self.clientes = []
-        for i in range(len(self.result)):
-            if self.result[i][2]:
-                self.clientes.append(self.result[i][2])
-
-        return self.result, self.clientes
 
     def habilitaBotoesCaixa(self):
         self.lineEditDescription.setEnabled(True)
