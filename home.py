@@ -23,8 +23,11 @@ from PyQt5.QtGui import *
 from PyQt5.QtPrintSupport import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWidgets import QMessageBox
+from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.pdfgen import canvas
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 import conexao
 
@@ -3330,9 +3333,6 @@ class EfetivaPedidoCaixa(QDialog):
             if replay2 == QMessageBox.Yes:
                 self.hide()
 
-                # dlg = Imprimir(self.nr_caixa)
-                # dlg.exec()
-
                 self.printer()
 
             else:
@@ -3343,90 +3343,103 @@ class EfetivaPedidoCaixa(QDialog):
         return self.nr_caixa
 
     def printer(self):
+        # Data atual
+        current_date = datetime.now().strftime("%Y-%m-%d")
+
+        # Consulta ao banco de dados
         self.cursor = conexao.banco.cursor()
         comando_sql = """
-                        select
-                            p.codigo,
-                            p.descricao,
-                            e.quantidade,
-                            p.preco,
-                            e.valor_total
-                        from
-                            produtos p
-                        inner join pedidocaixa e on p.codigo = e.cod_produto
-                        AND nr_caixa = {0}""".format(
+            select
+                p.codigo,
+                p.descricao,
+                e.quantidade,
+                p.preco,
+                e.valor_total
+            from
+                produtos p
+            inner join pedidocaixa e on p.codigo = e.cod_produto
+            AND nr_caixa = {0}""".format(
             str(self.nr_caixa)
         )
 
         self.cursor.execute(comando_sql)
         dados_lidos = self.cursor.fetchall()
-        y = 0
-        pdf = canvas.Canvas("recibo.pdf")
-        pdf.setFont("Times-Bold", 18)
-        pdf.drawString(90, 800, "MINA & MINEKO ART. FAMELE:")
-        pdf.setFont("Times-Bold", 12)
 
-        pdf.drawString(10, 750, "ID")
-        pdf.drawString(50, 750, "PRODUTO")
-        pdf.drawString(260, 750, "QTD.")
-        pdf.drawString(310, 750, "PREÇO UN.")
-        pdf.drawString(390, 750, "SUB.TOTAL")
-        pdf.drawString(470, 750, "TOTAL")
-        pdf.drawString(
-            3,
-            750,
-            "________________________________________________________________________________________",
+        # Somatório do total do pedido
+        total_pedido = sum(row[4] for row in dados_lidos)
+
+        # Nome do arquivo com a data atual e número do caixa
+        pdf_filename = f"Recibo_Caixa{self.nr_caixa}_{current_date}.pdf"
+
+        # Define o diretório onde deseja salvar o arquivo
+        save_dir = "/home/bionico/Documentos/Projetos21/caixa/caixa2022/relatorios/"  # Substitua pelo caminho desejado
+
+        # Combine o caminho do diretório com o nome do arquivo
+        full_path = os.path.join(save_dir, pdf_filename)
+
+        # doc = SimpleDocTemplate(pdf_filename, pagesize=letter)
+        doc = SimpleDocTemplate(full_path, pagesize=letter)
+        story = []
+
+        styles = getSampleStyleSheet()
+
+        # Cria um estilo personalizado para o cabeçalho centralizado
+        styleH = styles["Heading1"]
+        styleH.alignment = 1  # Defina o alinhamento para centralizar
+
+        # Cabeçalho
+        header_text = "Recibo"
+        header = Paragraph(header_text, styleH)
+        story.append(header)
+        story.append(Spacer(1, 12))
+
+        header = [
+            "COD",
+            "PRODUTO",
+            "QTD.",
+            "PREÇO",
+            "SUBTOTAL",
+        ]
+
+        results = [header]
+
+        for row in dados_lidos:
+            subtotal = row[3] * row[2]  # Preço x Quantidade
+            results.append(
+                [str(row[0]), row[1], str(row[2]), str(row[3]), str(subtotal)]
+            )
+
+        table = Table(results)
+        table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                    ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ]
+            )
         )
 
-        total = 0
-        subtotal = 0
-        for i in range(0, len(dados_lidos)):
-            y += 50
-            # CODIGO PRODUTO
-            pdf.drawString(10, 750 - y, str(dados_lidos[i][0]))
-            # DESCRIÇAO PRODUTO
-            pdf.drawString(50, 750 - y, str(dados_lidos[i][1]))
-            # QUANTIDADE VENDIDA
-            pdf.drawString(260, 750 - y, str(dados_lidos[i][2]))
-            # PREÇO UNITARIO
-            pdf.drawString(310, 750 - y, str(dados_lidos[i][3]))
-            subtotal = (dados_lidos[i][3]) * dados_lidos[i][2]  # QTD x PREÇO UNITARIO
-            total += subtotal
-            pdf.drawString(390, 750 - y, str(subtotal))  # SUB TOTAL
-        pdf.drawString(470, 750 - y, str(total))  # TOTAL
+        # Adicione a tabela à história
+        story.append(table)
+        story.append(Spacer(1, 12))
 
-        pdf.save()
+        # Total do pedido
+        total_text = f"Total do Pedido: R${total_pedido:.2f}"
+        total_paragraph = Paragraph(total_text, styles["Normal"])
+        story.append(total_paragraph)
 
-        with open("recibo.csv", "w") as f:
-            csv_writer = csv.writer(f)
-            rows = [i for i in dados_lidos]
-            csv_writer.writerows(rows)
+        # Salvar o arquivo automaticamente
+        doc.build(story)
 
         dlg = telaprincipal()
         dlg.exec()
 
-        self.InitWindow()
-        self.Barra()
-
-    def InitWindow(self):
-        try:
-            with open("recibo.csv", "r") as msg:
-                self.lin = [x.strip().split(",") for x in msg]
-
-                self.a = [self.lin[x] for x in range(len(self.lin))]
-
-                total = 0
-                for x in self.a:
-                    self.rw.set_style(PLAIN_COLUMNS)
-                    self.rw.add_row(x)
-
-                for sub in range(len(self.a)):
-                    total += float(self.a[sub][4])
-
-                print(self.rw)
-                msg.close()
-        except Exception as e:
-            self.errors(e)
+        return pdf_filename
 
 
 class ListPedidos(QMainWindow):
@@ -3829,16 +3842,8 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(self.about)
         help_menu.addAction(about_action)
 
-        # export to csv file action
-        export_Action = QAction("Export to CSV", self)
-        export_Action.setShortcut("Ctrl+E")
-        export_Action.triggered.connect(self.export_to_csv)
-        file_menu.addAction(export_Action)
-
         # self.show()
         self.showFullScreen()
-
-    # ... (restante do seu código)
 
     def update_time(self):
         current_time = QTime.currentTime()
@@ -3848,12 +3853,6 @@ class MainWindow(QMainWindow):
     def about(self):
         dlg = AboutDialog()
         dlg.exec()
-
-    def caixa(self):
-        # self.hide()
-        # dlg = telaprincipal()
-        # dlg.exec()
-        pass
 
     def listClientes(self):
         dlg = ListClientes()
@@ -3928,28 +3927,6 @@ class MainWindow(QMainWindow):
 
         else:
             event.ignore()
-
-    def export_to_csv(self, w):
-        try:
-            with open("sql/Expense Report.csv", "w", newline="") as file:
-                writer = csv.writer(file)
-                writer.writerow(
-                    (
-                        w.table.horizontalHeaderItem(0).text(),
-                        w.table.horizontalHeaderItem(1).text(),
-                    )
-                )
-                for rowNumber in range(w.table.rowCount()):
-                    writer.writerow(
-                        [
-                            w.table.item(rowNumber, 0).text(),
-                            w.table.item(rowNumber, 1).text(),
-                        ]
-                    )
-                print("CSV file exported.")
-            file.close()
-        except Exception as e:
-            print(e)
 
 
 class LoginForm(QDialog):
