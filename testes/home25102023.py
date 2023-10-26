@@ -419,8 +419,7 @@ class ListEstoque(QMainWindow):
         btn_ac_sair.triggered.connect(self.fechar)
         toolbar.addAction(btn_ac_sair)
 
-        # self.show()
-        self.showFullScreen()
+        self.show()
 
     def loaddata(self):
         self.cursor = conexao.banco.cursor()
@@ -483,147 +482,72 @@ class ListEstoque(QMainWindow):
 
 
 class SearchEstoque(QDialog):
+    """
+    Define uma nova janela onde executaremos
+    a busca no banco
+    """
+
     def __init__(self, *args, **kwargs):
         super(SearchEstoque, self).__init__(*args, **kwargs)
 
         self.cursor = conexao.banco.cursor()
-        self.current_record = 0
-        self.result_estoque = []
-        self.result_produto = []
+        self.QBtn = QPushButton()
+        self.QBtn.setText("Procurar")
 
         self.setWindowTitle("Pesquisar Produto em Estoque")
-        self.setFixedSize(600, 400)
+        self.setFixedWidth(300)
+        self.setFixedHeight(100)
 
-        # Widgets
-        self.product_name_label = QLabel(
-            "Descrição do Produto"
-        )  # Texto padrão como marcador de espaço
-        self.product_name_label.setAlignment(Qt.AlignCenter)
-        self.product_name_label.setStyleSheet(
-            "font-size: 18px; background-color: #f0f0f0;"
-        )  # Estilo com cor de fundo cinza
-        self.product_name_label.setFixedHeight(40)
+        # Chama a função de busca
+        self.QBtn.clicked.connect(self.searchProdEstoque)
 
+        layout = QVBoxLayout()
+
+        # Cria as caixas de digitaçãoe e
+        # verifica se é um numero
         self.searchinput = QLineEdit()
-        self.searchinput.setValidator(QIntValidator())
-        self.searchinput.setPlaceholderText("Código...")
-        self.search_btn = QPushButton("Procurar")
+        self.onlyInt = QIntValidator()
+        self.searchinput.setValidator(self.onlyInt)
+        self.searchinput.setPlaceholderText("Codigo do Produto - somente número")
+        layout.addWidget(self.searchinput)
 
-        self.close_btn = QPushButton("Fechar")
+        layout.addWidget(self.QBtn)
+        self.setLayout(layout)
 
-        self.result_label = QLabel("Código:")
-        self.description_label = QLabel("Descrição:")
-        self.entrada_label = QLabel("Quantidade de Entrada:")
-        self.saida_label = QLabel("Quantidade de Saída:")
-        self.saldo_label = QLabel("Saldo:")
-
-        self.result_lineedit = QLineEdit()
-        self.description_lineedit = QLineEdit()
-        self.entrada_lineedit = QLineEdit()
-        self.saida_lineedit = QLineEdit()
-        self.saldo_lineedit = QLineEdit()
-
-        for widget in [
-            self.result_lineedit,
-            self.description_lineedit,
-            self.entrada_lineedit,
-            self.saida_lineedit,
-            self.saldo_lineedit,
-        ]:
-            widget.setReadOnly(True)
-            widget.setStyleSheet("background-color: #f0f0f0;")  # Cor de fundo cinza
-
-        # Layout
-        grid_layout = QGridLayout()
-        grid_layout.addWidget(QLabel("Código do Produto:"), 0, 0)
-        grid_layout.addWidget(self.searchinput, 0, 1)
-        grid_layout.addWidget(self.search_btn, 0, 2)
-        grid_layout.addWidget(self.close_btn, 1, 2)
-
-        grid_layout.addWidget(self.result_label, 1, 0)
-        grid_layout.addWidget(self.result_lineedit, 1, 1)
-        grid_layout.addWidget(self.description_label, 2, 0)
-        grid_layout.addWidget(self.description_lineedit, 2, 1)
-        grid_layout.addWidget(self.entrada_label, 3, 0)
-        grid_layout.addWidget(self.entrada_lineedit, 3, 1)
-        grid_layout.addWidget(self.saida_label, 4, 0)
-        grid_layout.addWidget(self.saida_lineedit, 4, 1)
-        grid_layout.addWidget(self.saldo_label, 5, 0)
-        grid_layout.addWidget(self.saldo_lineedit, 5, 1)
-
-        nav_layout = QHBoxLayout()
-
-        main_layout = QVBoxLayout()
-        main_layout.addWidget(self.product_name_label)
-        main_layout.addLayout(grid_layout)
-        main_layout.addLayout(nav_layout)
-
-        self.setLayout(main_layout)
-
-        self.search_btn.clicked.connect(self.searchProdEstoque)
-        self.close_btn.clicked.connect(self.prodEstoqueclose)
-
+    # busca o produto pelo codigo
     def searchProdEstoque(self):
+        searchroll = ""
         searchroll = self.searchinput.text()
+
         try:
-            comando_sql = """
-              select
-                idproduto,
-                p.descricao,
-                coalesce(
-                    (SELECT
-                        sum(e.estoque) entrada
-                     FROM estoque e
-                     where status = 'E'
-                     and e.idproduto = i.idproduto), 0) entrada,
-                coalesce(
-                    (SELECT
-                        sum(e.estoque) saida
-                     FROM estoque e
-                     where status = 'S'
-                     and e.idproduto = i.idproduto), 0) saida,
+            consulta_estoque = (
+                "SELECT * FROM controle_clientes.estoque WHERE idproduto="
+                + str(searchroll)
+            )
+            self.cursor.execute(consulta_estoque)
+            result_estoque = self.cursor.fetchall()
+            for row in range(len(result_estoque)):
+                searchresult1 = "Codigo : " + str(result_estoque[0][0]) + "\n"
 
-                  coalesce(
-                      ((SELECT
-                         sum(e.estoque) entrada
-                       FROM estoque e
-                       where status = 'E'
-                       and e.idproduto = i.idproduto) -
-                      (SELECT
-                         sum(e.estoque) saida
-                       FROM estoque e
-                       where status = 'S'
-                       and e.idproduto = i.idproduto)), 0) estoque
+            consulta_produto = (
+                "SELECT * FROM controle_clientes.produtos WHERE codigo="
+                + str(searchroll)
+            )
+            self.cursor.execute(consulta_produto)
+            result_produto = self.cursor.fetchall()
+            for row in range(len(result_produto)):
+                searchresult2 = "Descrição : " + str(result_produto[0][1])
 
-              from
-                 estoque i
-              inner join produtos p on p.codigo = i.idproduto
-              where idproduto = %s
-            """
-            self.cursor.execute(comando_sql, (searchroll,))
-            result = self.cursor.fetchall()
-            self.result_estoque = result
-            self.current_record = 0
-            self.showRecord()
+            mostra = searchresult1 + searchresult2
 
-        except Exception as e:
-            QMessageBox.warning(self, "Pesquisa falhou", str(e))
+            QMessageBox.information(
+                QMessageBox(), "Pesquisa realizada com sucesso!", mostra
+            )
 
-    def showRecord(self):
-        if self.result_estoque:
-            estoque_record = self.result_estoque[self.current_record]
-
-            self.product_name_label.setText(
-                estoque_record[1]
-            )  # Atualize o rótulo do nome do produto
-            self.result_lineedit.setText(str(estoque_record[0]))
-            self.description_lineedit.setText(estoque_record[1])
-            self.entrada_lineedit.setText(str(estoque_record[2]))
-            self.saida_lineedit.setText(str(estoque_record[3]))
-            self.saldo_lineedit.setText(str(estoque_record[4]))
-
-    def prodEstoqueclose(self):
-        self.hide()
+        except Exception:
+            QMessageBox.warning(
+                QMessageBox(), "aleleonel@gmail.com", "A pesquisa falhou!"
+            )
 
 
 class SearchClientes(QDialog):
