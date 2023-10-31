@@ -176,29 +176,56 @@ class AboutDialog(QDialog):
 
 
 class CadastroEstoque(QDialog):
+    """
+    Define uma nova janela onde cadastramos os produtos
+    no estoque
+    """
+
     def __init__(self, *args, **kwargs):
         super(CadastroEstoque, self).__init__(*args, **kwargs)
 
-        self.setFixedWidth(500)
+        self.QBtn = QPushButton()
+        self.QBtn.setText("Registrar")
+
+        # Configurações do titulo da Janela
+        self.setWindowTitle("Add Estoque :")
+        self.setFixedWidth(300)
         self.setFixedHeight(300)
 
-        self.carrega_produtos()
+        self.setWindowTitle("Descição do Produto :")
+        self.setFixedWidth(300)
+        self.setFixedHeight(300)
 
-        self.QBtn = QPushButton("Registrar")
-        self.QBtn_close = QPushButton("Cancelar")
-        self.setWindowTitle("Adicionar Estoque")
+        self.cursor = conexao.banco.cursor()
+        consulta_sql = "SELECT * FROM produtos"
+        self.cursor.execute(consulta_sql)
+        result = self.cursor.fetchall()
+
+        # conexao.banco.commit()
+        # self.cursor.close()
+
+        self.QBtn.clicked.connect(self.addproduto)
 
         layout = QVBoxLayout()
+
+        # Insere o ramo ou tipo /
+        self.codigoinput = QComboBox()
+        busca = []
+        for row in range(len(result)):
+            busca.append(str(result[row][0]))
+        for i in range(len(busca)):
+            self.codigoinput.addItem(str(busca[i]))
+
         layout.addWidget(self.codigoinput)
 
         self.statusinput = QLineEdit()
         self.statusinput.setPlaceholderText("E")
-        self.statusinput.setReadOnly(True)
         layout.addWidget(self.statusinput)
+
+        # Insere o ramo ou tipo /
 
         self.descricaoinput = QLineEdit()
         self.descricaoinput.setPlaceholderText("Descrição")
-        self.descricaoinput.setReadOnly(True)
         layout.addWidget(self.descricaoinput)
 
         self.precoinput = QLineEdit()
@@ -210,47 +237,39 @@ class CadastroEstoque(QDialog):
         layout.addWidget(self.qtdinput)
 
         layout.addWidget(self.QBtn)
-        layout.addWidget(self.QBtn_close)
         self.setLayout(layout)
 
-        self.codigoinput.currentIndexChanged.connect(self.carrega_descricao_saldo)
-        self.QBtn.clicked.connect(self.addproduto)
-        self.QBtn_close.clicked.connect(self.cancelar)
-
-    def carrega_produtos(self):
-        try:
-            self.cursor = conexao.banco.cursor()
-            consulta_sql = "SELECT * FROM produtos"
-            self.cursor.execute(consulta_sql)
-            result = self.cursor.fetchall()
-
-            self.codigoinput = QComboBox()
-            for row in result:
-                self.codigoinput.addItem(str(row[0]))
-        except Exception as e:
-            QMessageBox.warning(QMessageBox(), "Erro na Busca", str(e))
-
-    def carrega_descricao_saldo(self):
-        try:
-            codigo = self.codigoinput.currentText()
-            self.cursor = conexao.banco.cursor()
-            consulta_sql = "SELECT descricao FROM produtos WHERE codigo = %s"
-            self.cursor.execute(consulta_sql, (codigo,))
-            valor_codigo = self.cursor.fetchone()
-
-            if valor_codigo:
-                self.descricaoinput.setText(valor_codigo[0])
-            else:
-                self.descricaoinput.clear()
-        except Exception as e:
-            QMessageBox.warning(QMessageBox(), "Erro na Inserção", str(e))
-
     def addproduto(self):
-        codigo = self.codigoinput.currentText()
-        quantidade = self.qtdinput.text()
-        preco = self.precoinput.text()
+        """
+        captura as informações digitadas
+        no COMBOBOX e armazena nas variaveis
+        :return:
+        codigo = ""
+        quantidade = ""
+        preco = ""
         status = "E"
-        # descricao = self.descricaoinput.text()
+        E da entrada na tabela estoque
+        e preço de compra
+        """
+        self.cursor = conexao.banco.cursor()
+        consulta_sql = "SELECT * FROM produtos WHERE codigo =" + str(
+            self.codigoinput.itemText(self.codigoinput.currentIndex())
+        )
+        self.cursor.execute(consulta_sql)
+        valor_codigo = self.cursor.fetchall()
+
+        for i in range(len(valor_codigo)):
+            dados_lidos = valor_codigo[i][1]
+
+        codigo = ""
+        quantidade = ""
+        preco = ""
+        status = "E"
+
+        codigo = self.codigoinput.itemText(self.codigoinput.currentIndex())
+        self.descricaoinput.setText(dados_lidos)
+        preco = self.precoinput.text()
+        quantidade = self.qtdinput.text()
 
         try:
             self.cursor = conexao.banco.cursor()
@@ -258,7 +277,7 @@ class CadastroEstoque(QDialog):
                 "INSERT INTO estoque (idproduto, estoque, status, preco_compra)"
                 "VALUES (%s, %s, %s, %s)"
             )
-            dados = (codigo, quantidade, status, preco)
+            dados = codigo, quantidade, status, preco
             self.cursor.execute(comando_sql, dados)
             conexao.banco.commit()
             self.cursor.close()
@@ -268,11 +287,10 @@ class CadastroEstoque(QDialog):
             )
             self.close()
 
-        except Exception as e:
-            QMessageBox.warning(QMessageBox(), "Erro na Inserção", str(e))
-
-    def cancelar(self):
-        self.hide()
+        except Exception:
+            QMessageBox.warning(
+                QMessageBox(), "aleleonel@gmail.com", "A inserção falhou!"
+            )
 
 
 class ListEstoque(QMainWindow):
