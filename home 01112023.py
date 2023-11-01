@@ -27,7 +27,8 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.pdfgen import canvas
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import (Paragraph, SimpleDocTemplate, Spacer, Table,
+                                TableStyle)
 
 import conexao
 
@@ -2797,11 +2798,6 @@ class DataEntryForm(QWidget, ConsultaProdutosEstoque):
         self.lineEditdata.setEnabled(False)
         self.layoutRight.addWidget(self.lineEditdata)
 
-        self.lineEditCodigo = QLineEdit()
-        self.lineEditCodigo.setPlaceholderText("Digite o odigo do produto...")
-        self.lineEditCodigo.editingFinished.connect(self.addProdutos)
-        self.layoutRight.addWidget(self.lineEditCodigo)
-
         self.lineEditCliente = QLineEdit()
         self.lineEditCliente.setPlaceholderText("Nome / Razão")
         self.model = QStandardItemModel()
@@ -2822,7 +2818,6 @@ class DataEntryForm(QWidget, ConsultaProdutosEstoque):
         self.model_prod = QStandardItemModel()
         self.model_prod = produtos
         self.lineEditDescription.setEnabled(False)
-        self.lineEditDescription.setReadOnly(True)
 
         completer_prod = QCompleter(self.model_prod, self)
         completer_prod.setCaseSensitivity(Qt.CaseInsensitive)
@@ -2938,7 +2933,6 @@ class DataEntryForm(QWidget, ConsultaProdutosEstoque):
         return self.result, self.clientes
 
     def habilitaBotoesCaixa(self):
-        self.lineEditCodigo.setEnabled(True)
         self.lineEditDescription.setEnabled(True)
         self.lineEditCliente.setEnabled(True)
         self.lineEditQtd.setEnabled(True)
@@ -3031,7 +3025,6 @@ class DataEntryForm(QWidget, ConsultaProdutosEstoque):
             print("NameError", str(NameError))
 
     def desabilitaBotoesCaixa(self):
-        self.lineEditCodigo.setEnabled(False)
         self.lineEditDescription.setEnabled(False)
         self.lineEditCliente.setEnabled(False)
         self.lineEditQtd.setEnabled(False)
@@ -3040,9 +3033,6 @@ class DataEntryForm(QWidget, ConsultaProdutosEstoque):
     def addCliente(self):
         entryItem = self.lineEditCliente.text()
 
-    def addCodigo(self):
-        entryCod = self.lineEditCodigo.text()
-
     def addProdutos(self):
         self.cursor = conexao.banco.cursor()
         consulta_prod = "SELECT * FROM produtos"
@@ -3050,19 +3040,10 @@ class DataEntryForm(QWidget, ConsultaProdutosEstoque):
         result_prod = self.cursor.fetchall()
 
         entryItem = self.lineEditDescription.text()
-        entryCod = self.lineEditCodigo.text()
 
         for i in range(len(result_prod)):
             if result_prod[i][1] == entryItem:
                 self.codigo = result_prod[i][0]
-                self.preco = result_prod[i][2]
-                print(type(self.preco))
-                self.TOTAL += float(int(self.preco))
-                self.lineEditPrice.setText(str(self.preco))
-
-            elif result_prod[i][0] == int(entryCod):
-                self.codigo = result_prod[i][0]
-                self.lineEditDescription.setText(result_prod[i][1])
                 self.preco = result_prod[i][2]
                 print(type(self.preco))
                 self.TOTAL += float(int(self.preco))
@@ -3152,7 +3133,6 @@ class DataEntryForm(QWidget, ConsultaProdutosEstoque):
             tot_format = "R${0:.2f} ".format(float(self.ttotal))
             self.lbl_total.setText(str(tot_format))
 
-            self.lineEditCodigo.setText("")
             self.lineEditDescription.setText("")
             self.lineEditQtd.setText("")
             self.lineEditPrice.setText("")
@@ -3179,7 +3159,6 @@ class DataEntryForm(QWidget, ConsultaProdutosEstoque):
         # self.total = []
         self.calculaitens = []
         self.lineEditCliente.setText("")
-        self.lineEditCodigo.setText("")
         self.lineEditDescription.setText("")
         self.lineEditQtd.setText("")
         self.lineEditPrice.setText("")
@@ -3193,7 +3172,6 @@ class DataEntryForm(QWidget, ConsultaProdutosEstoque):
             linha = self.table.currentRow()
             self.table.removeRow(linha)
             self.items -= 1
-            self.lineEditCodigo.setText("")
             self.lineEditDescription.setText("")
             self.lineEditQtd.setText("")
             self.lineEditPrice.setText("")
@@ -3250,9 +3228,9 @@ class DataEntryForm(QWidget, ConsultaProdutosEstoque):
         comando_sql = "SELECT nome FROM clientes"
         self.cursor.execute(comando_sql)
         cli_nome = self.cursor.fetchall()
-
         nome_digitado = []
         for i in range(len(cli_nome)):
+            print("selecionando o nome: ", cli_nome[i][0])
             nome_digitado.append(cli_nome[i][0])
 
         if nome == "" or nome not in nome_digitado:
